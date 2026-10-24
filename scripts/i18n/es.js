@@ -7,6 +7,7 @@ let i18n = {
   failed_to_load_subscription: "Error al cargar la suscripción",
   edit_subscription: "Editar suscripción",
   add_subscription: "Añadir suscripción",
+  provider_catalog_confirm_leave: "¿Volver al catálogo? Se perderán los cambios no guardados.",
   confirm_delete_subscription: "¿Estás seguro de que quieres eliminar esta suscripción?",
   // Settings
   network_response_error: "Error en la respuesta de la red",

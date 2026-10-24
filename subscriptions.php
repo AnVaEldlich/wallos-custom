@@ -3,10 +3,13 @@
 require_once 'includes/header.php';
 require_once 'includes/getdbkeys.php';
 require_once 'includes/logo_theme_variant.php';
+require_once 'includes/provider_catalog.php';
 
 include_once 'includes/list_subscriptions.php';
 require_once 'includes/subscription_payers.php';
 require_once 'includes/subscription_categories.php';
+
+$providerCatalog = get_provider_catalog();
 
 $sort = "next_payment";
 $sortOrder = $sort;
@@ -365,11 +368,63 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
     ?>
   </div>
 </section>
-<section class="subscription-form" id="subscription-form">
+<section class="subscription-form" id="subscription-form"
+  data-confirm-leave-catalog="<?= htmlspecialchars(translate('provider_catalog_confirm_leave', $i18n), ENT_QUOTES, 'UTF-8') ?>">
   <header>
     <h3 id="form-title"><?= translate('add_subscription', $i18n) ?></h3>
     <span class="fa-solid fa-xmark close-form" onClick="closeAddSubscription()"></span>
   </header>
+
+  <div id="provider-catalog" class="provider-catalog" hidden>
+    <p class="provider-catalog-hint"><?= translate('provider_catalog_hint', $i18n) ?></p>
+    <div class="provider-catalog-search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input type="search" id="provider-catalog-query" autocomplete="off" inputmode="search"
+        placeholder="<?= translate('provider_catalog_search', $i18n) ?>"
+        aria-label="<?= translate('provider_catalog_search', $i18n) ?>">
+    </div>
+    <div id="provider-catalog-grid" class="provider-catalog-grid" role="list">
+      <?php foreach ($providerCatalog as $provider): ?>
+        <?php
+        $icon = $provider['icon'];
+        $searchBlob = strtolower($provider['name'] . ' ' . implode(' ', $provider['search_terms']));
+        ?>
+        <button type="button" class="provider-catalog-card" role="listitem"
+          data-provider-id="<?= htmlspecialchars($provider['id'], ENT_QUOTES, 'UTF-8') ?>"
+          data-provider-name="<?= htmlspecialchars($provider['name'], ENT_QUOTES, 'UTF-8') ?>"
+          data-provider-url="<?= htmlspecialchars((string) ($provider['url'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+          data-search="<?= htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') ?>"
+          onClick="selectProviderFromCatalog(this)">
+          <span class="provider-catalog-icon"
+            style="--provider-icon-color: <?= htmlspecialchars($icon['color'] ?? 'var(--main-color)', ENT_QUOTES, 'UTF-8') ?>">
+            <?php if (($icon['type'] ?? '') === 'fa-brands'): ?>
+              <i class="fa-brands <?= htmlspecialchars($icon['class'], ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true"></i>
+            <?php else: ?>
+              <span class="provider-catalog-initials" aria-hidden="true"><?= htmlspecialchars($icon['text'] ?? substr($provider['name'], 0, 1), ENT_QUOTES, 'UTF-8') ?></span>
+            <?php endif; ?>
+          </span>
+          <span class="provider-catalog-name"><?= htmlspecialchars($provider['name'], ENT_QUOTES, 'UTF-8') ?></span>
+        </button>
+      <?php endforeach; ?>
+    </div>
+    <p id="provider-catalog-empty" class="provider-catalog-empty hide" role="status">
+      <?= translate('provider_catalog_no_results', $i18n) ?>
+    </p>
+    <div class="provider-catalog-actions">
+      <button type="button" class="button secondary-button thin" onClick="enterManualSubscriptionForm()">
+        <i class="fa-solid fa-pen" aria-hidden="true"></i>
+        <?= translate('provider_catalog_manual', $i18n) ?>
+      </button>
+    </div>
+  </div>
+
+  <div id="subscription-form-body" class="subscription-form-body" hidden>
+    <div id="provider-catalog-back-row" class="provider-catalog-back-row hide">
+      <button type="button" class="button secondary-button thin" onClick="returnToProviderCatalog()">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+        <?= translate('provider_catalog_back', $i18n) ?>
+      </button>
+    </div>
   <form action="endpoints/subscription/add.php" method="post" id="subs-form">
 
     <div class="form-group-inline">
@@ -654,7 +709,11 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       <input type="submit" value="<?= translate('save', $i18n) ?>" class="thin" id="save-button">
     </div>
   </form>
+  </div>
 </section>
+<script type="text/javascript">
+  window.providerCatalog = <?= json_encode($providerCatalog, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) ?>;
+</script>
 
 <?php require_once 'includes/subscription_details_popup.php'; ?>
 <script src="scripts/subscriptions.js?<?= $version ?>"></script>

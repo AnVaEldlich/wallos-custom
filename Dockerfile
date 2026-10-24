@@ -32,6 +32,7 @@ RUN dos2unix /etc/cron.d/cronjobs && \
     /usr/bin/crontab /etc/cron.d/cronjobs && \
     mkdir /var/log/cron && \
     chown -R www-data:www-data /var/www/html && \
+    dos2unix /var/www/html/startup.sh && \
     chmod +x /var/www/html/startup.sh && \
     echo 'pm.max_children = 15' >> /usr/local/etc/php-fpm.d/zz-docker.conf && \
     echo 'pm.max_requests = 500' >> /usr/local/etc/php-fpm.d/zz-docker.conf && \

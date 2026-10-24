@@ -1,6 +1,10 @@
 let isSortOptionsOpen = false;
 let scrollTopBeforeOpening = 0;
 const shouldScroll = window.innerWidth <= 768;
+// Tracks whether the add modal is showing the provider catalogue or the
+// subscription form. Edit always opens the form and never the catalogue.
+let subscriptionModalView = "catalog";
+let selectedProviderId = null;
 function toggleSortOptions() {
   const sortOptions = document.querySelector("#sort-options");
   sortOptions.classList.toggle("is-open");
@@ -177,6 +181,143 @@ function resetForm() {
   const deleteButton = document.querySelector("#deletesub");
   deleteButton.style = 'display: none';
   deleteButton.removeAttribute("onClick");
+  selectedProviderId = null;
+}
+
+function showProviderCatalogView() {
+  const catalog = document.querySelector("#provider-catalog");
+  const formBody = document.querySelector("#subscription-form-body");
+  const backRow = document.querySelector("#provider-catalog-back-row");
+  if (!catalog || !formBody) {
+    return;
+  }
+  subscriptionModalView = "catalog";
+  catalog.hidden = false;
+  formBody.hidden = true;
+  if (backRow) {
+    backRow.classList.add("hide");
+  }
+  const query = document.querySelector("#provider-catalog-query");
+  if (query) {
+    query.value = "";
+    filterProviderCatalog();
+    query.focus();
+  }
+}
+
+function showSubscriptionFormView(options = {}) {
+  const catalog = document.querySelector("#provider-catalog");
+  const formBody = document.querySelector("#subscription-form-body");
+  const backRow = document.querySelector("#provider-catalog-back-row");
+  if (!formBody) {
+    return;
+  }
+  subscriptionModalView = "form";
+  if (catalog) {
+    catalog.hidden = true;
+  }
+  formBody.hidden = false;
+  if (backRow) {
+    if (options.showBack) {
+      backRow.classList.remove("hide");
+    } else {
+      backRow.classList.add("hide");
+    }
+  }
+}
+
+function filterProviderCatalog() {
+  const queryInput = document.querySelector("#provider-catalog-query");
+  const emptyMessage = document.querySelector("#provider-catalog-empty");
+  const cards = document.querySelectorAll(".provider-catalog-card");
+  if (!queryInput || cards.length === 0) {
+    return;
+  }
+  const term = queryInput.value.trim().toLowerCase();
+  let visible = 0;
+  cards.forEach(card => {
+    const haystack = (card.dataset.search || card.dataset.providerName || "").toLowerCase();
+    const matches = term === "" || haystack.includes(term);
+    card.classList.toggle("hide", !matches);
+    if (matches) {
+      visible += 1;
+    }
+  });
+  if (emptyMessage) {
+    emptyMessage.classList.toggle("hide", visible > 0);
+  }
+}
+
+function selectProviderFromCatalog(button) {
+  if (!button) {
+    return;
+  }
+  const name = button.dataset.providerName || "";
+  const url = button.dataset.providerUrl || "";
+  selectedProviderId = button.dataset.providerId || null;
+
+  resetForm();
+  const startDate = document.querySelector("#start_date");
+  if (startDate) {
+    startDate.value = new Date().toISOString().split('T')[0];
+  }
+
+  const nameInput = document.querySelector("#name");
+  if (nameInput) {
+    nameInput.value = name;
+    setSearchButtonStatus();
+  }
+  const urlInput = document.querySelector("#url");
+  if (urlInput && url) {
+    urlInput.value = url;
+  }
+
+  showSubscriptionFormView({ showBack: true });
+  if (nameInput) {
+    nameInput.focus();
+  }
+}
+
+function enterManualSubscriptionForm() {
+  selectedProviderId = null;
+  resetForm();
+  const startDate = document.querySelector("#start_date");
+  if (startDate) {
+    startDate.value = new Date().toISOString().split('T')[0];
+  }
+  showSubscriptionFormView({ showBack: true });
+  const nameInput = document.querySelector("#name");
+  if (nameInput) {
+    nameInput.focus();
+  }
+}
+
+function isSubscriptionFormDirty() {
+  const name = (document.querySelector("#name")?.value || "").trim();
+  const price = (document.querySelector("#price")?.value || "").trim();
+  const notes = (document.querySelector("#notes")?.value || "").trim();
+  const url = (document.querySelector("#url")?.value || "").trim();
+  const logoUrl = (document.querySelector("#logo-url")?.value || "").trim();
+  const logoFile = document.querySelector("#logo");
+  const hasLogoFile = logoFile && logoFile.files && logoFile.files.length > 0;
+  const id = (document.querySelector("#id")?.value || "").trim();
+  if (id !== "") {
+    return false;
+  }
+  return name !== "" || price !== "" || notes !== "" || url !== "" || logoUrl !== "" || hasLogoFile;
+}
+
+function returnToProviderCatalog() {
+  if (isSubscriptionFormDirty()) {
+    const modal = document.querySelector("#subscription-form");
+    const message = (modal && modal.dataset.confirmLeaveCatalog)
+      || translate('provider_catalog_confirm_leave');
+    if (!confirm(message)) {
+      return;
+    }
+  }
+  resetForm();
+  showProviderCatalogView();
 }
 
 // Picks the logo filename that reads well on the theme currently in use,
@@ -268,6 +409,7 @@ function fillEditFormFields(subscription) {
   deleteButton.style = 'display: block';
   deleteButton.setAttribute("onClick", `deleteSubscription(event, ${subscription.id})`);
 
+  showSubscriptionFormView({ showBack: false });
   const modal = document.getElementById('subscription-form');
   modal.classList.add("is-open");
 }
@@ -303,10 +445,11 @@ function openEditSubscription(event, id) {
 function addSubscription() {
   resetForm();
   const modal = document.getElementById('subscription-form');
-  
+
   const startDate = document.querySelector("#start_date");
   startDate.value = new Date().toISOString().split('T')[0];
 
+  showProviderCatalogView();
   modal.classList.add("is-open");
   const body = document.querySelector('body');
   body.classList.add('no-scroll');
@@ -321,6 +464,7 @@ function closeAddSubscription() {
     window.scrollTo(0, scrollTopBeforeOpening);
   }
   resetForm();
+  showProviderCatalogView();
 }
 
 function handleFileSelect(event) {
@@ -834,6 +978,11 @@ document.addEventListener('DOMContentLoaded', function () {
     cycleSelectEl.addEventListener("change", function () {
       toggleOneTimeCycleUI(this.value === "5");
     });
+  }
+
+  const providerCatalogQuery = document.querySelector("#provider-catalog-query");
+  if (providerCatalogQuery) {
+    providerCatalogQuery.addEventListener("input", filterProviderCatalog);
   }
 });
 

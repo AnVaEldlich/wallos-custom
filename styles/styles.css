@@ -2360,6 +2360,149 @@ button.dark-theme-button i {
   margin-top: 0px;
 }
 
+/* Provider catalogue shown when adding a subscription */
+.provider-catalog-hint {
+  margin: 0 0 14px;
+  color: var(--text-color);
+  opacity: 0.85;
+  font-size: 0.95rem;
+}
+
+.provider-catalog-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 0 12px;
+  border: 1px solid var(--box-border-color);
+  border-radius: 10px;
+  background: var(--hover-background-color, transparent);
+  box-sizing: border-box;
+}
+
+.provider-catalog-search>i {
+  color: var(--main-color);
+  opacity: 0.8;
+}
+
+.provider-catalog-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  margin: 0;
+  padding: 12px 0;
+  width: 100%;
+}
+
+.provider-catalog-search input:focus {
+  outline: none;
+}
+
+.provider-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.provider-catalog-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 16px 10px;
+  border: 1px solid var(--box-border-color);
+  border-radius: 12px;
+  background: var(--box-background-color);
+  color: var(--text-color);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  min-height: 118px;
+  box-sizing: border-box;
+}
+
+.provider-catalog-card:hover,
+.provider-catalog-card:focus-visible {
+  border-color: var(--main-color);
+  box-shadow: 0 0 0 1px var(--main-color);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.provider-catalog-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(127, 127, 127, 0.12);
+  color: var(--provider-icon-color, var(--main-color));
+  font-size: 1.55rem;
+  flex-shrink: 0;
+}
+
+.provider-catalog-initials {
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.provider-catalog-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.provider-catalog-empty {
+  text-align: center;
+  margin: 18px 0 8px;
+  color: var(--text-color);
+  opacity: 0.75;
+}
+
+.provider-catalog-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  padding-top: 8px;
+}
+
+.provider-catalog-actions .button>i {
+  margin-right: 8px;
+}
+
+.provider-catalog-back-row {
+  margin-bottom: 14px;
+}
+
+.provider-catalog-back-row .button>i {
+  margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+  .provider-catalog-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+  }
+
+  .provider-catalog-card {
+    min-height: 108px;
+    padding: 14px 8px;
+  }
+
+  .provider-catalog-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 1.35rem;
+  }
+}
+
 .subscription-form .buttons {
   display: flex;
   flex-direction: row;
