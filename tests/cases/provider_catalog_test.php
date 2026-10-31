@@ -15,13 +15,14 @@ wallos_test('provider catalogue has unique stable ids and required fields', func
     $ids = [];
     foreach ($catalog as $provider) {
         assert_true(is_array($provider), 'each entry must be an array');
-        foreach (['id', 'name', 'key', 'search_terms', 'icon', 'account_linking', 'status_check', 'api_cancellation', 'integration_type'] as $field) {
+        foreach (['id', 'name', 'key', 'search_terms', 'icon', 'logo_slug', 'account_linking', 'status_check', 'api_cancellation', 'integration_type'] as $field) {
             assert_true(array_key_exists($field, $provider), "missing field {$field}");
         }
 
         assert_true($provider['id'] !== '', 'id must be non-empty');
         assert_true($provider['name'] !== '', 'name must be non-empty');
         assert_true($provider['key'] !== '', 'key must be non-empty');
+        assert_true($provider['logo_slug'] !== '', 'logo_slug must be non-empty');
         assert_true(is_array($provider['search_terms']), 'search_terms must be an array');
         assert_true(is_array($provider['icon']), 'icon must be an array');
         assert_true(in_array($provider['icon']['type'], ['fa-brands', 'initials'], true), 'icon type must be known');
@@ -65,11 +66,22 @@ wallos_test('provider catalogue search terms cover expected starter brands', fun
     }
 });
 
+wallos_test('provider catalogue logo URLs use the selfh.st jsDelivr path', function () {
+    assert_same(
+        'https://cdn.jsdelivr.net/gh/selfhst/icons/png/netflix.png',
+        provider_catalog_logo_url_for_id('netflix'),
+        'netflix logo url'
+    );
+    assert_same(null, provider_catalog_logo_url_for_id('does-not-exist'), 'unknown provider has no logo url');
+    assert_same(null, provider_catalog_logo_remote_url('../evil'), 'unsafe slug is rejected');
+});
+
 wallos_test('subscriptions page mounts the catalogue from the single PHP source', function () {
     $source = file_get_contents(WALLOS_ROOT . '/subscriptions.php');
     assert_true(strpos($source, "require_once 'includes/provider_catalog.php'") !== false, 'page loads the catalogue');
     assert_true(strpos($source, 'id="provider-catalog"') !== false, 'catalogue markup is present');
     assert_true(strpos($source, 'enterManualSubscriptionForm') !== false, 'manual entry remains available');
-    assert_true(strpos($source, 'window.providerCatalog') !== false, 'catalogue JSON is exposed once from PHP');
+    $popupSource = file_get_contents(WALLOS_ROOT . '/includes/subscription_details_popup.php');
+    assert_true(strpos($popupSource, 'window.providerCatalog') !== false, 'catalogue JSON is exposed for details modal');
     assert_true(!file_exists(WALLOS_ROOT . '/scripts/provider-catalog.js'), 'catalogue is not duplicated in a separate JS data file');
 });

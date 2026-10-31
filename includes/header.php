@@ -104,6 +104,7 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
   <link rel="stylesheet" href="styles/brands.css">
   <script type="text/javascript" src="scripts/all.js?<?= $version ?>"></script>
   <script type="text/javascript" src="scripts/common.js?<?= $version ?>"></script>
+  <script type="text/javascript" src="scripts/header-theme.js?<?= $version ?>"></script>
   <script type="text/javascript">
     window.theme = <?= json_encode($theme, JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_APOS) ?>;
     window.update_theme_settings = "<?= $updateThemeSettings ?>";
@@ -172,7 +173,11 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
           </div>
         </a>
       </div>
-      <nav>
+      <nav class="header-nav">
+        <button type="button" class="header-theme-toggle" id="header-theme-toggle"
+          title="<?= translate('theme', $i18n) ?>" aria-label="<?= translate('theme', $i18n) ?>">
+          <i class="fa-solid <?= $theme == "dark" ? "fa-sun" : "fa-moon" ?>"></i>
+        </button>
         <div class="dropdown">
           <button class="dropbtn" onClick="toggleDropdown()">
             <img src="<?= htmlspecialchars($userData['avatar'], ENT_QUOTES, 'UTF-8') ?>" alt="me" id="avatar">

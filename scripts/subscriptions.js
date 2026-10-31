@@ -182,6 +182,41 @@ function resetForm() {
   deleteButton.style = 'display: none';
   deleteButton.removeAttribute("onClick");
   selectedProviderId = null;
+  const providerCatalogIdInput = document.querySelector("#provider_catalog_id");
+  if (providerCatalogIdInput) {
+    providerCatalogIdInput.value = "";
+  }
+  const logoFields = document.querySelector("#subscription-logo-fields");
+  if (logoFields) {
+    logoFields.classList.add("hide");
+  }
+}
+
+function applyProviderCatalogLogo(providerId) {
+  const providerCatalogIdInput = document.querySelector("#provider_catalog_id");
+  if (providerCatalogIdInput) {
+    providerCatalogIdInput.value = providerId || "";
+  }
+  selectedProviderId = providerId || null;
+}
+
+function syncProviderCatalogIdFromName() {
+  const idField = document.querySelector("#id");
+  if (idField && idField.value !== "") {
+    return;
+  }
+  const name = (document.querySelector("#name")?.value || "").trim().toLowerCase();
+  if (name === "") {
+    applyProviderCatalogLogo(null);
+    return;
+  }
+  const entry = (window.providerCatalog || []).find((provider) => {
+    if (provider.name.toLowerCase() === name) {
+      return true;
+    }
+    return (provider.search_terms || []).some((term) => String(term).toLowerCase() === name);
+  });
+  applyProviderCatalogLogo(entry ? entry.id : null);
 }
 
 function showProviderCatalogView() {
@@ -271,6 +306,7 @@ function selectProviderFromCatalog(button) {
   if (urlInput && url) {
     urlInput.value = url;
   }
+  applyProviderCatalogLogo(selectedProviderId);
 
   showSubscriptionFormView({ showBack: true });
   if (nameInput) {
@@ -408,6 +444,15 @@ function fillEditFormFields(subscription) {
   const deleteButton = document.querySelector("#deletesub");
   deleteButton.style = 'display: block';
   deleteButton.setAttribute("onClick", `deleteSubscription(event, ${subscription.id})`);
+
+  const providerCatalogIdInput = document.querySelector("#provider_catalog_id");
+  if (providerCatalogIdInput) {
+    providerCatalogIdInput.value = subscription.provider_catalog_id || "";
+  }
+  const logoFields = document.querySelector("#subscription-logo-fields");
+  if (logoFields) {
+    logoFields.classList.remove("hide");
+  }
 
   showSubscriptionFormView({ showBack: false });
   const modal = document.getElementById('subscription-form');

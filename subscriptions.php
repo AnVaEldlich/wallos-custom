@@ -281,6 +281,7 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $print[$id]['logo'] = $subscription['logo'] != "" ? "images/uploads/logos/" . $subscription['logo'] : "";
       $print[$id]['logo_text_color'] = $subscription['logo_text_color'] ?? null;
       $print[$id]['logo_variant'] = !empty($subscription['logo_variant']) ? "images/uploads/logos/" . $subscription['logo_variant'] : null;
+      $print[$id]['provider_catalog_id'] = $subscription['provider_catalog_id'] ?? '';
       $print[$id]['name'] = $subscription['name'];
       $cycle = $subscription['cycle'];
       $frequency = $subscription['frequency'];
@@ -431,7 +432,11 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       <input type="text" id="name" name="name" autocomplete="off"
         placeholder="<?= translate('subscription_name', $i18n) ?>"
         onchange="setSearchButtonStatus()" onkeypress="this.onchange();" onpaste="this.onchange();"
-        oninput="this.onchange();" required>
+        oninput="this.onchange(); syncProviderCatalogIdFromName();" required>
+    </div>
+    <input type="hidden" id="id" name="id">
+    <input type="hidden" id="provider_catalog_id" name="provider_catalog_id" value="">
+    <div class="form-group-inline hide" id="subscription-logo-fields">
       <label for="logo" class="logo-preview">
         <img src="" alt="<?= translate('logo_preview', $i18n) ?>" id="form-logo">
       </label>
@@ -442,7 +447,6 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
         onClick="searchLogo()">
         <i class="fa-solid fa-magnifying-glass"></i>
       </div>
-      <input type="hidden" id="id" name="id">
       <div class="logo-search-backdrop" id="logo-search-backdrop" onClick="closeLogoSearch()"></div>
       <div id="logo-search-results" class="logo-search"<?= !empty($googleSearchEnabled) ? ' data-google-search="1"' : '' ?>>
         <button type="button" class="close-logo-search" onClick="closeLogoSearch()" title="<?= translate('cancel', $i18n) ?>">
@@ -711,9 +715,6 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
   </form>
   </div>
 </section>
-<script type="text/javascript">
-  window.providerCatalog = <?= json_encode($providerCatalog, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) ?>;
-</script>
 
 <?php require_once 'includes/subscription_details_popup.php'; ?>
 <script src="scripts/subscriptions.js?<?= $version ?>"></script>

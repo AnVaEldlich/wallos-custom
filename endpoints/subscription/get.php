@@ -3,6 +3,7 @@ require_once '../../includes/connect_endpoint.php';
 require_once '../../includes/markdown.php';
 require_once '../../includes/subscription_payers.php';
 require_once '../../includes/subscription_categories.php';
+require_once '../../includes/subscription_logo.php';
 
 if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     if (isset($_GET['id']) && $_GET['id'] != "") {
@@ -41,6 +42,14 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
             $subscriptionData['notify_days_before'] = $row['notify_days_before'];
             $subscriptionData['cancellation_date'] = $row['cancellation_date'];
             $subscriptionData['replacement_subscription_id'] = $row['replacement_subscription_id'];
+            $subscriptionData['provider_catalog_id'] = array_key_exists('provider_catalog_id', $row)
+                ? ($row['provider_catalog_id'] ?? '')
+                : resolve_provider_catalog_id_for_subscription($row['name'] ?? '', '');
+            $subscriptionData['catalog_logo_url'] = subscription_catalog_logo_url_for_row([
+                'name' => $row['name'],
+                'logo' => $row['logo'],
+                'provider_catalog_id' => $subscriptionData['provider_catalog_id'],
+            ]);
 
             $subscriptionJson = json_encode($subscriptionData);
             header('Content-Type: application/json');

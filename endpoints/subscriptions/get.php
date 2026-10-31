@@ -168,6 +168,7 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     $print[$id]['logo'] = $subscription['logo'] != "" ? "images/uploads/logos/" . $subscription['logo'] : "";
     $print[$id]['logo_text_color'] = $subscription['logo_text_color'] ?? null;
     $print[$id]['logo_variant'] = !empty($subscription['logo_variant']) ? "images/uploads/logos/" . $subscription['logo_variant'] : null;
+    $print[$id]['provider_catalog_id'] = $subscription['provider_catalog_id'] ?? '';
     $print[$id]['name'] = $subscription['name'] ?? "";
     $cycle = $subscription['cycle'];
     $frequency = $subscription['frequency'];

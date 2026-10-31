@@ -24,6 +24,7 @@
  *   category: string|null,
  *   url: string|null,
  *   icon: array{type: string, class?: string, color?: string, text?: string},
+ *   logo_slug: string,
  *   account_linking: bool,
  *   status_check: bool,
  *   api_cancellation: bool,
@@ -41,6 +42,7 @@ function get_provider_catalog()
             'category' => 'music',
             'url' => 'https://www.spotify.com',
             'icon' => ['type' => 'fa-brands', 'class' => 'fa-spotify', 'color' => '#1DB954'],
+            'logo_slug' => 'spotify',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -54,6 +56,7 @@ function get_provider_catalog()
             'category' => 'entertainment',
             'url' => 'https://www.netflix.com',
             'icon' => ['type' => 'initials', 'text' => 'N', 'color' => '#E50914'],
+            'logo_slug' => 'netflix',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -67,6 +70,7 @@ function get_provider_catalog()
             'category' => 'entertainment',
             'url' => 'https://www.disneyplus.com',
             'icon' => ['type' => 'initials', 'text' => 'D+', 'color' => '#113CCF'],
+            'logo_slug' => 'disney-plus',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -80,6 +84,7 @@ function get_provider_catalog()
             'category' => 'entertainment',
             'url' => 'https://www.youtube.com/premium',
             'icon' => ['type' => 'fa-brands', 'class' => 'fa-youtube', 'color' => '#FF0000'],
+            'logo_slug' => 'youtube',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -93,6 +98,7 @@ function get_provider_catalog()
             'category' => 'entertainment',
             'url' => 'https://www.amazon.com/prime',
             'icon' => ['type' => 'fa-brands', 'class' => 'fa-amazon', 'color' => '#FF9900'],
+            'logo_slug' => 'amazon-prime',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -106,6 +112,7 @@ function get_provider_catalog()
             'category' => 'music',
             'url' => 'https://www.apple.com/apple-music/',
             'icon' => ['type' => 'fa-brands', 'class' => 'fa-apple', 'color' => '#FA243C'],
+            'logo_slug' => 'apple-music',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -119,6 +126,7 @@ function get_provider_catalog()
             'category' => 'entertainment',
             'url' => 'https://tv.apple.com',
             'icon' => ['type' => 'fa-brands', 'class' => 'fa-apple', 'color' => '#000000'],
+            'logo_slug' => 'apple-tv',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -132,6 +140,7 @@ function get_provider_catalog()
             'category' => 'entertainment',
             'url' => 'https://www.max.com',
             'icon' => ['type' => 'initials', 'text' => 'M', 'color' => '#002BE7'],
+            'logo_slug' => 'max',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -145,6 +154,7 @@ function get_provider_catalog()
             'category' => 'productivity',
             'url' => 'https://www.microsoft.com/microsoft-365',
             'icon' => ['type' => 'fa-brands', 'class' => 'fa-microsoft', 'color' => '#00A4EF'],
+            'logo_slug' => 'microsoft-365',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -158,6 +168,7 @@ function get_provider_catalog()
             'category' => 'cloud_services',
             'url' => 'https://one.google.com',
             'icon' => ['type' => 'fa-brands', 'class' => 'fa-google', 'color' => '#4285F4'],
+            'logo_slug' => 'google-one',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -171,6 +182,7 @@ function get_provider_catalog()
             'category' => 'cloud_services',
             'url' => 'https://www.dropbox.com',
             'icon' => ['type' => 'fa-brands', 'class' => 'fa-dropbox', 'color' => '#0061FF'],
+            'logo_slug' => 'dropbox',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -184,6 +196,7 @@ function get_provider_catalog()
             'category' => 'gaming',
             'url' => 'https://www.playstation.com/ps-plus/',
             'icon' => ['type' => 'fa-brands', 'class' => 'fa-playstation', 'color' => '#003791'],
+            'logo_slug' => 'playstation',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -197,6 +210,7 @@ function get_provider_catalog()
             'category' => 'gaming',
             'url' => 'https://www.xbox.com/xbox-game-pass',
             'icon' => ['type' => 'fa-brands', 'class' => 'fa-xbox', 'color' => '#107C10'],
+            'logo_slug' => 'xbox-game-pass',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -210,6 +224,7 @@ function get_provider_catalog()
             'category' => 'software',
             'url' => 'https://www.adobe.com/creativecloud.html',
             'icon' => ['type' => 'initials', 'text' => 'Ad', 'color' => '#FF0000'],
+            'logo_slug' => 'adobe',
             'account_linking' => false,
             'status_check' => false,
             'api_cancellation' => false,
@@ -233,4 +248,36 @@ function get_provider_catalog_entry($id)
     }
 
     return null;
+}
+
+/**
+ * Remote PNG URL for a catalogue logo slug (selfh.st icon set via jsDelivr).
+ * Same source Wallos already uses in logo search — bundled at save time into
+ * images/uploads/logos, not hotlinked on subscription cards.
+ *
+ * @param string $slug
+ * @return string|null
+ */
+function provider_catalog_logo_remote_url($slug)
+{
+    $slug = preg_replace('/[^a-zA-Z0-9._-]/', '', $slug);
+    if ($slug === '' || preg_match('/\.\.|^\.|^-/', $slug)) {
+        return null;
+    }
+
+    return 'https://cdn.jsdelivr.net/gh/selfhst/icons/png/' . $slug . '.png';
+}
+
+/**
+ * @param string $providerId
+ * @return string|null
+ */
+function provider_catalog_logo_url_for_id($providerId)
+{
+    $entry = get_provider_catalog_entry($providerId);
+    if ($entry === null || empty($entry['logo_slug'])) {
+        return null;
+    }
+
+    return provider_catalog_logo_remote_url($entry['logo_slug']);
 }

@@ -46,6 +46,7 @@ const staticAssets = [
     'webfonts/fa-regular-400.ttf',
     'scripts/all.js',
     'scripts/common.js',
+    'scripts/header-theme.js',
     'scripts/dashboard.js',
     'scripts/subscriptions.js',
     'scripts/subscription-details.js',

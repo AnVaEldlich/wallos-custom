@@ -6,6 +6,8 @@
   Runs no queries of its own — on some pages $db is already closed here.
 */
 require_once __DIR__ . '/getdbkeys.php';
+require_once __DIR__ . '/provider_catalog.php';
+$providerCatalogForDetails = get_provider_catalog();
 ?>
 
 <div class="details-backdrop" id="details-backdrop" onClick="closeSubscriptionDetails()"></div>
@@ -133,6 +135,7 @@ foreach ($subscriptions as $detailsSubscription) {
 }
 ?>
 <script>
+  window.providerCatalog = <?= json_encode($providerCatalogForDetails, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
   window.subscriptionLookups = <?= json_encode($detailsLookups, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 </script>
 <script src="scripts/subscription-details.js?<?= $version ?>"></script>

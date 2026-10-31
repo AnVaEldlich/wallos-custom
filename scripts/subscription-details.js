@@ -92,6 +92,72 @@ function detailsAddChip(container, text, style) {
   container.appendChild(chip);
 }
 
+function subscriptionHasUploadedLogo(subscription) {
+  return !!(subscription.logo && String(subscription.logo).trim());
+}
+
+function resolveSubscriptionCatalogLogoUrl(subscription) {
+  if (subscription.catalog_logo_url) {
+    return subscription.catalog_logo_url;
+  }
+
+  const catalog = window.providerCatalog || [];
+  let catalogId = (subscription.provider_catalog_id || "").trim();
+
+  if (!catalogId && subscription.name) {
+    const normalizedName = subscription.name.trim().toLowerCase();
+    const matched = catalog.find((provider) => {
+      if (provider.name.toLowerCase() === normalizedName) {
+        return true;
+      }
+      return (provider.search_terms || []).some(
+        (term) => String(term).toLowerCase() === normalizedName
+      );
+    });
+    catalogId = matched ? matched.id : "";
+  }
+
+  if (!catalogId) {
+    return null;
+  }
+
+  const entry = catalog.find((provider) => provider.id === catalogId);
+  if (!entry || !entry.logo_slug) {
+    return null;
+  }
+
+  const slug = String(entry.logo_slug).replace(/[^a-zA-Z0-9._-]/g, "");
+  if (slug === "" || slug.includes("..") || slug.startsWith(".") || slug.startsWith("-")) {
+    return null;
+  }
+
+  return `https://cdn.jsdelivr.net/gh/selfhst/icons/png/${slug}.png`;
+}
+
+function appendDetailsLogoFallback(logoContainer, subscription) {
+  const fallback = document.createElement('span');
+  fallback.className = 'details-logo-fallback';
+  fallback.textContent = (subscription.name || "?").charAt(0).toUpperCase();
+  logoContainer.appendChild(fallback);
+}
+
+function appendDetailsCatalogLogo(logoContainer, subscription) {
+  const catalogLogoUrl = resolveSubscriptionCatalogLogoUrl(subscription);
+  if (!catalogLogoUrl) {
+    return false;
+  }
+  const img = document.createElement('img');
+  img.src = catalogLogoUrl;
+  img.alt = "";
+  img.className = "details-catalog-logo";
+  img.onerror = function () {
+    logoContainer.innerHTML = "";
+    appendDetailsLogoFallback(logoContainer, subscription);
+  };
+  logoContainer.appendChild(img);
+  return true;
+}
+
 function renderSubscriptionDetails(subscription) {
   const lookups = window.subscriptionLookups;
   const strings = lookups.i18n;
@@ -99,7 +165,13 @@ function renderSubscriptionDetails(subscription) {
 
   const logoContainer = document.querySelector('#details-logo');
   logoContainer.innerHTML = "";
-  if (subscription.logo) {
+
+  // Catalogue providers always show the catalogue icon in the details modal.
+  // Older rows (e.g. Netflix) may have provider_catalog_id but no uploaded file;
+  // preferring the catalogue avoids the initials fallback and broken local paths.
+  if (appendDetailsCatalogLogo(logoContainer, subscription)) {
+    // Catalogue icon rendered.
+  } else if (subscriptionHasUploadedLogo(subscription)) {
     // When a themed variant exists, render both images; CSS (see
     // .logo-theme-original/.logo-theme-variant in styles.css) shows only the
     // one matching the current theme, so it updates instantly even if the
@@ -124,13 +196,14 @@ function renderSubscriptionDetails(subscription) {
       const img = document.createElement('img');
       img.src = "images/uploads/logos/" + subscription.logo;
       img.alt = "";
+      img.onerror = function () {
+        logoContainer.innerHTML = "";
+        appendDetailsLogoFallback(logoContainer, subscription);
+      };
       logoContainer.appendChild(img);
     }
   } else {
-    const fallback = document.createElement('span');
-    fallback.className = 'details-logo-fallback';
-    fallback.textContent = (subscription.name || "?").charAt(0).toUpperCase();
-    logoContainer.appendChild(fallback);
+    appendDetailsLogoFallback(logoContainer, subscription);
   }
 
   document.querySelector('#details-name').textContent = subscription.name;

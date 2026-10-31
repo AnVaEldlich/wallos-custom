@@ -2,6 +2,7 @@
 
 require_once 'i18n/getlang.php';
 require_once __DIR__ . '/currency_rates.php';
+require_once __DIR__ . '/subscription_logo.php';
 
 function getBillingCycle($cycle, $frequency, $i18n)
 {
@@ -278,10 +279,7 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
                 $subscriptionExtraClasses .= " manual";
             }
 
-            $hasLogo = false;
-            if ($subscription['logo'] != "") {
-                $hasLogo = true;
-            }
+            $hasLogo = subscription_row_has_display_logo($subscription);
 
             ?>
 
@@ -294,13 +292,7 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
                 data-name="<?= $subscription['name'] ?>">
                 <div class="subscription-main">
                     <span class="logo <?= !$hasLogo ? 'hideOnMobile' : '' ?>">
-                        <?php
-                        if ($hasLogo) {
-                            echo renderThemedLogoImg($subscription['logo'], $subscription['logo_variant'] ?? null, $subscription['logo_text_color'] ?? null);
-                        } else {
-                            include $imagePath . "images/siteicons/svg/logo.php";
-                        }
-                        ?>
+                        <?= render_subscription_card_logo($subscription) ?>
                     </span>
                     <span class="name <?= $hasLogo ? 'hideOnMobile' : '' ?>"><?= $subscription['name'] ?></span>
                     <span class="cycle"

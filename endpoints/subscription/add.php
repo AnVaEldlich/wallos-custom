@@ -9,6 +9,8 @@ require_once '../../includes/logo_theme_variant.php';
 require_once '../../includes/logo_cleanup.php';
 require_once '../../includes/subscription_payers.php';
 require_once '../../includes/subscription_categories.php';
+require_once '../../includes/provider_catalog.php';
+require_once '../../includes/subscription_logo.php';
 
 if (!file_exists('../../images/uploads/logos')) {
     mkdir('../../images/uploads/logos', 0777, true);
@@ -251,6 +253,8 @@ $categoryId = $categoryIds[0] ?? null;
 $notes = validate_markdown($_POST["notes"]);
 $url = validate($_POST['url']);
 $logoUrl = validate($_POST['logo-url']);
+$providerCatalogId = validate($_POST['provider_catalog_id'] ?? '');
+$providerCatalogId = resolve_provider_catalog_id_for_subscription($name, $providerCatalogId);
 $logo = "";
 $logoError = "";
 $notify = isset($_POST['notifications']) ? true : false;
@@ -317,7 +321,19 @@ if ($logoUrl !== "") {
     } else {
         $logoError = $result['message'];
     }
-} else {
+} elseif (!$isEdit && $providerCatalogId !== "") {
+    $catalogLogoUrl = provider_catalog_logo_url_for_id($providerCatalogId);
+    if ($catalogLogoUrl !== null) {
+        $result = getLogoFromUrl($catalogLogoUrl, '../../images/uploads/logos/', $name, $settings, $i18n);
+        if ($result['success']) {
+            $logo = $result['filename'];
+        } else {
+            $logoError = $result['message'];
+        }
+    }
+}
+
+if ($logo === "" && $logoUrl === "" && empty($logoError)) {
     if (!empty($_FILES['logo']['name'])) {
         $fileType = mime_content_type($_FILES['logo']['tmp_name']);
         if (strpos($fileType, 'image') === false) {
@@ -368,12 +384,12 @@ if (!$isEdit) {
                         name, logo, price, currency_id, next_payment, cycle, frequency, notes,
                         payment_method_id, payer_user_id, category_id, notify, inactive, url,
                         notify_days_before, user_id, cancellation_date, replacement_subscription_id,
-                        auto_renew, start_date, logo_text_color, logo_variant
+                        auto_renew, start_date, logo_text_color, logo_variant, provider_catalog_id
                     ) VALUES (
                         :name, :logo, :price, :currencyId, :nextPayment, :cycle, :frequency, :notes,
                         :paymentMethodId, :payerUserId, :categoryId, :notify, :inactive, :url,
                         :notifyDaysBefore, :userId, :cancellationDate, :replacement_subscription_id,
-                        :autoRenew, :startDate, :logoTextColor, :logoVariant
+                        :autoRenew, :startDate, :logoTextColor, :logoVariant, :providerCatalogId
                     )";
 } else {
     $id = $_POST['id'];
@@ -411,7 +427,8 @@ if (!$isEdit) {
                         url = :url, 
                         notify_days_before = :notifyDaysBefore, 
                         cancellation_date = :cancellationDate, 
-                        replacement_subscription_id = :replacement_subscription_id";
+                        replacement_subscription_id = :replacement_subscription_id,
+                        provider_catalog_id = :providerCatalogId";
 
     if ($logo != "") {
         $sql .= ", logo = :logo, logo_text_color = :logoTextColor, logo_variant = :logoVariant";
@@ -448,12 +465,13 @@ if ($isEdit) {
 }
 $stmt->bindParam(':userId', $userId, SQLITE3_INTEGER);
 $stmt->bindParam(':replacement_subscription_id', $replacementSubscriptionId, SQLITE3_INTEGER);
+$stmt->bindValue(':providerCatalogId', $providerCatalogId !== '' ? $providerCatalogId : null, SQLITE3_TEXT);
 
 if ($stmt->execute()) {
     $success['status'] = "Success";
     $text = $isEdit ? "updated" : "added";
     $success['message'] = translate('subscription_' . $text . '_successfuly', $i18n);
-    if ($logoError !== "") {
+    if ($logoError !== "" && $providerCatalogId === '' && $logo === "") {
         $success['logo_warning'] = $logoError;
     }
 
