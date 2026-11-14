@@ -111,6 +111,7 @@ $currencies = [
     ['id' => 32, 'name' => 'South African Rand', 'symbol' => 'R', 'code' => 'ZAR'],
     ['id' => 33, 'name' => 'Ukrainian Hryvnia', 'symbol' => '₴', 'code' => 'UAH'],
     ['id' => 34, 'name' => 'New Taiwan Dollar', 'symbol' => 'NT$', 'code' => 'TWD'],
+    ['id' => 35, 'name' => 'Colombian Peso', 'symbol' => 'COL$', 'code' => 'COP'],
 ];
 
 $passwordMismatch = false;

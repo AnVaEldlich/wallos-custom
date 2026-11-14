@@ -2,6 +2,7 @@
 require_once '../../includes/connect_endpoint.php';
 require_once '../../includes/validate_endpoint.php';
 require_once '../../includes/logo_cleanup.php';
+require_once '../../includes/usage_sessions.php';
 
 $postData = file_get_contents("php://input");
 $data = json_decode($postData, true);
@@ -23,6 +24,8 @@ $categoriesStmt = $db->prepare("DELETE FROM subscription_categories WHERE subscr
 $categoriesStmt->bindParam(':subscriptionId', $subscriptionId, SQLITE3_INTEGER);
 $categoriesStmt->bindParam(':userId', $userId, SQLITE3_INTEGER);
 $categoriesStmt->execute();
+
+usage_delete_for_subscription_ids($db, $userId, [$subscriptionId]);
 
 $deleteQuery = "DELETE FROM subscriptions WHERE id = :subscriptionId AND user_id = :userId";
 $deleteStmt = $db->prepare($deleteQuery);

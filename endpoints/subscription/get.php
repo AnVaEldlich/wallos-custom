@@ -4,6 +4,7 @@ require_once '../../includes/markdown.php';
 require_once '../../includes/subscription_payers.php';
 require_once '../../includes/subscription_categories.php';
 require_once '../../includes/subscription_logo.php';
+require_once '../../includes/usage_sessions.php';
 
 if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     if (isset($_GET['id']) && $_GET['id'] != "") {
@@ -45,6 +46,19 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
             $subscriptionData['provider_catalog_id'] = array_key_exists('provider_catalog_id', $row)
                 ? ($row['provider_catalog_id'] ?? '')
                 : resolve_provider_catalog_id_for_subscription($row['name'] ?? '', '');
+            $usageSummary = usage_summary_for_subscription($db, $userId, $subscriptionId);
+            $subscriptionData['usage'] = [
+                'total' => $usageSummary['total'],
+                'measured' => $usageSummary['measured'],
+                'estimated' => $usageSummary['estimated'],
+                'manual' => $usageSummary['manual'],
+                'last_used' => $usageSummary['last_used'],
+                'device' => $usageSummary['device'],
+                'total_label' => usage_format_duration($usageSummary['total']),
+                'measured_label' => usage_format_duration($usageSummary['measured']),
+                'estimated_label' => usage_format_duration($usageSummary['estimated']),
+                'manual_label' => usage_format_duration($usageSummary['manual']),
+            ];
             $subscriptionData['catalog_logo_url'] = subscription_catalog_logo_url_for_row([
                 'name' => $row['name'],
                 'logo' => $row['logo'],

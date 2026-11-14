@@ -208,8 +208,8 @@ wallos_test('the statistics split a price evenly between its categories, so they
 
 wallos_test('bulk delete removes the payer and category rows too, and bulk set-category replaces the category list', function () {
     $source = file_get_contents(WALLOS_ROOT . '/endpoints/subscriptions/bulkedit.php');
-    assert_contains("foreach (['subscription_payers', 'subscription_categories'] as \$table)", $source,
-        'a deleted subscription leaves no payer or category rows behind for a reused id');
+    assert_contains("foreach (['subscription_payers', 'subscription_categories', 'subscription_usage_sessions', 'usage_prompt_dismissals'] as \$table)", $source,
+        'a deleted subscription leaves no payer, category or usage rows behind for a reused id');
     assert_true(strpos($source, "DELETE FROM \$table") < strpos($source, 'DELETE FROM subscriptions WHERE id IN'),
         'the junction rows are removed while the subscriptions can still be found');
     assert_contains('saveSubscriptionCategories($db, $subscriptionId, [$value])', $source,

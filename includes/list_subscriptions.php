@@ -90,6 +90,32 @@ function getPriceConverted($price, $currency, $database)
 }
 
 /**
+ * The price and currency code a card shows.
+ *
+ * A display currency chosen in Settings converts every card into that
+ * currency and leaves the amount stored on the subscription alone. With no
+ * display currency, the older "convert to my main currency" switch still
+ * applies.
+ */
+function applyDisplayedSubscriptionPrice(&$printRow, $rawPrice, $currencyId, $mainCurrencyId, $settings, $currencies, $database)
+{
+    $price = floatval($rawPrice);
+    $code = $currencies[$currencyId]['code'] ?? '';
+    $displayCurrencyId = (int) ($settings['display_currency_id'] ?? 0);
+
+    if ($displayCurrencyId > 0 && isset($currencies[$displayCurrencyId]) && $displayCurrencyId !== (int) $currencyId) {
+        $price = wallos_convert_between($price, (int) $currencyId, $displayCurrencyId, $database);
+        $code = $currencies[$displayCurrencyId]['code'];
+    } elseif (isset($settings['convertCurrency']) && $settings['convertCurrency'] === 'true' && (int) $currencyId !== (int) $mainCurrencyId) {
+        $price = getPriceConverted($price, $currencyId, $database);
+        $code = $currencies[$mainCurrencyId]['code'] ?? $code;
+    }
+
+    $printRow['price'] = $price;
+    $printRow['currency_code'] = $code;
+}
+
+/**
  * The value a subscription is ranked by when the list is sorted by price: its
  * price in the main currency, so AED 71.00 does not outrank GBP 55.00 just
  * because 71 > 55 (#861). Follows the monthly-price display setting, so the
@@ -321,7 +347,12 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
                             }
                             ?>
                         </span>
-
+                        <span class="usage-time"
+                            data-usage-id="<?= (int) $subscription['id'] ?>"
+                            data-usage-seconds="<?= (int) ($subscription['usage_seconds'] ?? 0) ?>"
+                            data-usage-live="<?= !empty($subscription['usage_live']) ? '1' : '0' ?>"
+                            data-usage-as-of="<?= (int) ($subscription['usage_as_of'] ?? time()) ?>"
+                            data-usage-empty="<?= htmlspecialchars(translate('usage_none', $i18n), ENT_QUOTES, 'UTF-8') ?>"><?= !empty($subscription['usage_label']) ? htmlspecialchars($subscription['usage_label']) : translate('usage_none', $i18n) ?></span>
                     </span>
                     <span class="payment_method">
                         <?php if (!empty($subscription['payment_method_icon'])) { ?>

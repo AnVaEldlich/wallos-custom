@@ -8,6 +8,7 @@ require_once 'includes/provider_catalog.php';
 include_once 'includes/list_subscriptions.php';
 require_once 'includes/subscription_payers.php';
 require_once 'includes/subscription_categories.php';
+require_once 'includes/usage_sessions.php';
 
 $providerCatalog = get_provider_catalog();
 
@@ -288,7 +289,6 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $print[$id]['billing_cycle'] = getBillingCycle($cycle, $frequency, $i18n);
       $print[$id]['one_time'] = ($cycle == 5);
       $paymentMethodId = $subscription['payment_method_id'];
-      $print[$id]['currency_code'] = $currencies[$subscription['currency_id']]['code'];
       $currencyId = $subscription['currency_id'];
       $print[$id]['auto_renew'] = $subscription['auto_renew'];
       $next_payment_timestamp = strtotime($subscription['next_payment']);
@@ -303,7 +303,7 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $print[$id]['category_ids'] = $categoriesBySubscription[$id] ?? [];
       $print[$id]['payer_user_id'] = $subscription['payer_user_id'];
       $print[$id]['payer_user_ids'] = $payersBySubscription[$id] ?? [];
-      $print[$id]['price'] = floatval($subscription['price']);
+      applyDisplayedSubscriptionPrice($print[$id], $subscription['price'], $currencyId, $mainCurrencyId, $settings, $currencies, $db);
       $print[$id]['sort_price'] = getSortPrice($subscription['price'], $subscription['currency_id'], $mainCurrencyId, $cycle, $frequency, $settings, $db);
       $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment']);
       $print[$id]['inactive'] = $subscription['inactive'];
@@ -311,10 +311,6 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $print[$id]['notes'] = $subscription['notes'];
       $print[$id]['replacement_subscription_id'] = $subscription['replacement_subscription_id'];
 
-      if (isset($settings['convertCurrency']) && $settings['convertCurrency'] === 'true' && $currencyId != $mainCurrencyId) {
-        $print[$id]['price'] = getPriceConverted($print[$id]['price'], $currencyId, $db);
-        $print[$id]['currency_code'] = $currencies[$mainCurrencyId]['code'];
-      }
       if (isset($settings['showMonthlyPrice']) && $settings['showMonthlyPrice'] === 'true') {
         $print[$id]['price'] = getPricePerMonth($cycle, $frequency, $print[$id]['price']);
       }
@@ -322,6 +318,16 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
         $print[$id]['original_price'] = floatval($subscription['price']);
         $print[$id]['original_currency_code'] = $currencies[$subscription['currency_id']]['code'];
       }
+    }
+
+    $usageAsOf = time();
+    $usageSummaries = usage_summaries_for_user($db, $userId, $usageAsOf);
+    foreach ($print as $usageId => $usageRow) {
+      $usageSummary = $usageSummaries[$usageRow['id']] ?? usage_empty_summary($usageAsOf);
+      $print[$usageId]['usage_label'] = usage_format_duration($usageSummary['total']);
+      $print[$usageId]['usage_seconds'] = $usageSummary['total'];
+      $print[$usageId]['usage_live'] = $usageSummary['live'];
+      $print[$usageId]['usage_as_of'] = $usageSummary['as_of'];
     }
 
     if ($sortOrder == "alphanumeric") {
@@ -473,19 +479,20 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
     </div>
 
     <div class="form-group-inline">
-      <input type="number" step="0.01" id="price" name="price" autocomplete="off"
+      <input type="text" inputmode="decimal" id="price" name="price" autocomplete="off"
         placeholder="<?= translate('price', $i18n) ?>" required>
       <select id="currency" name="currency_id" placeholder="<?= translate('add_subscription', $i18n) ?>">
         <?php
         foreach ($currencies as $currency) {
           $selected = ($currency['id'] == $main_currency) ? 'selected' : '';
           ?>
-          <option value="<?= $currency['id'] ?>" <?= $selected ?>><?= $currency['name'] ?></option>
+          <option value="<?= $currency['id'] ?>" data-code="<?= htmlspecialchars($currency['code'], ENT_QUOTES, 'UTF-8') ?>" <?= $selected ?>><?= $currency['name'] ?></option>
           <?php
         }
         ?>
       </select>
     </div>
+    <p id="price-error" class="price-error" hidden></p>
 
     <div class="form-group">
       <div class="inline">
@@ -717,6 +724,7 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
 </section>
 
 <?php require_once 'includes/subscription_details_popup.php'; ?>
+<script src="scripts/price-input.js?<?= $version ?>"></script>
 <script src="scripts/subscriptions.js?<?= $version ?>"></script>
 <?php
 if (isset($_GET['add'])) {

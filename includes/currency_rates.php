@@ -83,3 +83,34 @@ function wallos_convert_price($price, $currencyId, $db, $userId = null)
 
     return (float) $price / $rate;
 }
+
+/**
+ * Converts a price from one of the user's currencies into another.
+ *
+ * Rates are stored as units of that currency per one unit of the main
+ * currency, so the path is source -> main -> target. The same currency, or a
+ * rate that was never stored, leaves the price as it was.
+ *
+ * @param float|int|string $price
+ * @param int              $fromCurrencyId
+ * @param int              $toCurrencyId
+ * @param SQLite3          $db
+ * @param int|null         $userId
+ * @return float
+ */
+function wallos_convert_between($price, $fromCurrencyId, $toCurrencyId, $db, $userId = null)
+{
+    if ((int) $fromCurrencyId === (int) $toCurrencyId) {
+        return (float) $price;
+    }
+
+    $rates = wallos_currency_rates($db, $userId);
+    $fromRate = $rates[(int) $fromCurrencyId] ?? null;
+    $toRate = $rates[(int) $toCurrencyId] ?? null;
+
+    if (empty($fromRate) || empty($toRate)) {
+        return (float) $price;
+    }
+
+    return (float) $price / $fromRate * $toRate;
+}

@@ -895,7 +895,9 @@ body.light img.logo-theme-variant[data-native-theme="dark"] {
 .subscription .price {
   grid-area: price;
   justify-content: center;
-  flex-direction: row;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .subscriptions:not(.grid-view) .subscription .price .value {
@@ -903,9 +905,16 @@ body.light img.logo-theme-variant[data-native-theme="dark"] {
   overflow-wrap: break-word;
 }
 
-.subscription .price .original_price {
+.subscription .price .original_price,
+.subscription .price .usage-time {
   font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
   color: var(--text-muted);
+}
+
+.subscription .price .usage-time {
+  display: block;
 }
 
 .subscription .actions {
@@ -1684,6 +1693,16 @@ header #avatar {
 .form-group.hide,
 .form-group-inline.hide {
   display: none;
+}
+
+.price-error {
+  margin: -8px 0 16px;
+  color: var(--error-color);
+  font-size: 13px;
+}
+
+#price.price-invalid {
+  border-color: var(--error-color);
 }
 
 .height50 {
@@ -4076,6 +4095,8 @@ input[type="radio"]:checked+label::after {
 
 .dashboard-subscriptions-list>.subscription-item.thin {
   height: 115px;
+  width: max-content;
+  min-width: 155px;
 }
 
 .dashboard-subscriptions-list>.subscription-item .subscription-item-title {
@@ -4092,6 +4113,7 @@ input[type="radio"]:checked+label::after {
 
 .dashboard-subscriptions-list>.subscription-item.thin .subscription-item-title {
   font-size: 16px;
+  max-width: 115px;
 }
 
 .dashboard-subscriptions-list>.subscription-item .subscription-item-logo {
@@ -4119,7 +4141,8 @@ input[type="radio"]:checked+label::after {
 }
 
 .dashboard-subscriptions-list>.subscription-item.thin .subscription-item-value {
-  font-size: 20px;;
+  font-size: 20px;
+  white-space: nowrap;
 }
 
 .ai-recommendations-container {
@@ -4260,6 +4283,67 @@ input[type="radio"]:checked+label::after {
 
 .dashboard-subscriptions-container::-webkit-scrollbar {
     display: none;
+}
+
+.dashboard-subscriptions-container.is-draggable,
+.dashboard-subscriptions-container.is-draggable .subscription-item {
+  cursor: grab;
+}
+
+.dashboard-subscriptions-container.is-grabbing,
+.dashboard-subscriptions-container.is-grabbing .subscription-item {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel {
+  overflow: hidden;
+  scroll-behavior: auto;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel .dashboard-subscriptions-list {
+  width: max-content;
+  animation: upcoming-carousel-marquee var(--upcoming-carousel-duration, 28s) linear infinite;
+  will-change: transform;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel:hover .dashboard-subscriptions-list,
+.dashboard-subscriptions-container.is-upcoming-carousel:focus-within .dashboard-subscriptions-list {
+  animation-play-state: paused;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel.is-dragging,
+.dashboard-subscriptions-container.is-upcoming-carousel.is-grabbing {
+  cursor: grabbing;
+  touch-action: none;
+  user-select: none;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel.is-dragging .dashboard-subscriptions-list,
+.dashboard-subscriptions-container.is-upcoming-carousel.is-grabbing .dashboard-subscriptions-list {
+  animation: none !important;
+  cursor: grabbing;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel .subscription-item.is-carousel-clone {
+  pointer-events: auto;
+}
+
+@keyframes upcoming-carousel-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-subscriptions-container.is-upcoming-carousel .dashboard-subscriptions-list {
+    animation: none;
+  }
 }
 
 .view-toggle {
@@ -4466,8 +4550,12 @@ input[type="radio"]:checked+label::after {
 
 .subscriptions.grid-view .subscription-main>.name {
   grid-area: name;
+  justify-self: stretch;
+  align-self: start;
+  width: 100%;
   justify-content: flex-start;
   text-align: left;
+  align-items: flex-start;
   font-size: 17px;
   font-weight: 600;
   max-height: none;
@@ -4479,10 +4567,16 @@ input[type="radio"]:checked+label::after {
 .subscriptions.grid-view .subscription-main>.price {
   grid-area: price;
   justify-content: flex-start;
+  align-items: flex-start;
   align-self: start;
   font-size: 23px;
   font-weight: 700;
   margin: 0px 0px 12px;
+}
+
+.subscriptions.grid-view .subscription .price .usage-time {
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .subscriptions.grid-view .subscription-main>.cycle {
@@ -4776,7 +4870,7 @@ body.details-open {
   box-shadow: none;
 }
 
-.details-price-row .details-export-button {
+.details-price-row .details-edit-button {
   margin-inline-start: auto;
 }
 

@@ -28,6 +28,7 @@ let i18n = {
   cant_disable_payment_in_use: "No se puede desactivar el método de pago en uso",
   failed_save_payment_method: "Error al guardar el método de pago",
   unknown_error: "Error desconocido, por favor inténtalo de nuevo.",
+  invalid_currency_amount: "Ese monto no es válido para {{currency}}. El valor más pequeño es {{minimum}}.",
   delete_account_confirmation: "¿Estás seguro de que quieres eliminar tu cuenta?",
   this_will_delete_all_data: "Esto eliminará todos tus datos y no se podrán recuperar. ¿Continuar?",
   success: "Éxito",

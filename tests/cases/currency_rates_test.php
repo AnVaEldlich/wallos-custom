@@ -107,6 +107,21 @@ wallos_test('the unscoped map resolves any currency by id', function () {
     $db->close();
 });
 
+wallos_test('a price converts from one currency into another through the main currency', function () {
+    $db = wallos_test_open_database();
+    currency_rates_fixture($db);
+
+    $eur = wallos_test_currency_id(1, 0);
+    $usd = wallos_test_currency_id(1, 1);
+
+    assert_same(11.0 / 1.1, wallos_convert_between(11.0, $usd, $eur, $db, 1), 'USD 11 at 1.1 per euro is 10 euro');
+    assert_same(10.0 * 1.1, wallos_convert_between(10.0, $eur, $usd, $db, 1), '10 euro is USD 11');
+    assert_same(8.0, wallos_convert_between(8.0, $eur, $eur, $db, 1), 'the same currency is not converted');
+    assert_same(8.0, wallos_convert_between(8.0, $usd, 999999, $db, 1), 'a missing target leaves the price untouched');
+
+    $db->close();
+});
+
 wallos_test('two connections do not share a rate map', function () {
     $first = wallos_test_open_database();
     currency_rates_fixture($first);

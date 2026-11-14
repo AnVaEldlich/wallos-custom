@@ -10,3 +10,4 @@
 0 3 * * * /usr/local/bin/php /var/www/html/endpoints/cronjobs/cleanupresettokens.php >> /var/log/cron/cleanupresettokens.log 2>&1
 30 3 * * 1 /usr/local/bin/php /var/www/html/endpoints/cronjobs/generaterecommendations.php weekly >> /var/log/cron/generaterecommendations.log 2>&1
 0 4 1 * * /usr/local/bin/php /var/www/html/endpoints/cronjobs/generaterecommendations.php monthly >> /var/log/cron/generaterecommendations.log 2>&1
+*/15 * * * * /usr/local/bin/php /var/www/html/endpoints/cronjobs/dnsusage.php >> /var/log/cron/dnsusage.log 2>&1

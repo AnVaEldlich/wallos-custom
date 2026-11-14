@@ -1,11 +1,14 @@
 services:
   wallos:
     container_name: wallos
-    image: bellamy/wallos:latest
+    # Build from this repo so local UI/code changes are served.
+    # For the published release image instead, use: image: bellamy/wallos:latest
+    build: .
+    image: wallos-local
     ports:
       - "8282:80/tcp"
     environment:
-      TZ: 'America/Toronto'
+      TZ: 'America/Bogota'
       # Optional OIDC environment variables
       # OIDC_ENABLED: "true"
       # OIDC_PROVIDER_NAME: "Authelia"

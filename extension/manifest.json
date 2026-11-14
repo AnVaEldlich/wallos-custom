@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Wallos usage",
+  "version": "1.2.0",
+  "description": "Records time on matching subscription sites, including background playback, with a 1s heartbeat.",
+  "permissions": ["tabs", "idle", "storage", "alarms"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "options.html",
+  "action": {
+    "default_title": "Wallos usage"
+  }
+}

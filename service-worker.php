@@ -48,6 +48,7 @@ const staticAssets = [
     'scripts/common.js',
     'scripts/header-theme.js',
     'scripts/dashboard.js',
+    'scripts/price-input.js',
     'scripts/subscriptions.js',
     'scripts/subscription-details.js',
     'scripts/password-toggle.js',

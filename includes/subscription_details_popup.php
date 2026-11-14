@@ -27,6 +27,11 @@ $providerCatalogForDetails = get_provider_catalog();
   <div class="details-price-row">
     <span class="details-price" id="details-price"></span>
     <span class="details-cycle" id="details-billing-cycle"></span>
+    <button type="button" class="button secondary-button details-action-button details-edit-button"
+      id="details-edit-button" title="<?= translate('edit', $i18n) ?>"
+      aria-label="<?= translate('edit', $i18n) ?>">
+      <i class="fa-solid fa-pen"></i>
+    </button>
     <button type="button" class="button secondary-button details-action-button details-export-button"
       id="details-export-button" title="<?= translate('export_icalendar', $i18n) ?>"
       aria-label="<?= translate('export_icalendar', $i18n) ?>">
@@ -77,6 +82,18 @@ $providerCatalogForDetails = get_provider_catalog();
       <dt><?= translate('replaced_with', $i18n) ?></dt>
       <dd id="details-replacement"></dd>
     </div>
+    <div class="details-item" id="details-usage-item">
+      <dt><?= translate('usage', $i18n) ?></dt>
+      <dd id="details-usage"></dd>
+    </div>
+    <div class="details-item">
+      <dt><?= translate('usage_import_dates', $i18n) ?></dt>
+      <dd>
+        <input type="text" id="details-usage-dates" placeholder="2026-01-15, 2026-02-02">
+        <button type="button" class="button thin" id="details-usage-import"><?= translate('save', $i18n) ?></button>
+        <p class="settings-notes"><?= translate('usage_import_info', $i18n) ?></p>
+      </dd>
+    </div>
   </dl>
   <div class="details-notes hide" id="details-notes-item">
     <i class="fa-solid fa-note-sticky"></i>
@@ -109,6 +126,12 @@ $detailsLookups = [
     'day_before' => translate('day_before', $i18n),
     'days_before' => translate('days_before', $i18n),
     'none' => translate('none', $i18n),
+    'usage_none' => translate('usage_none', $i18n),
+    'usage_measured' => translate('usage_measured', $i18n),
+    'usage_estimated' => translate('usage_estimated', $i18n),
+    'usage_manual' => translate('usage_manual', $i18n),
+    'usage_last_used' => translate('usage_last_used', $i18n),
+    'usage_device' => translate('usage_device', $i18n),
   ],
 ];
 foreach ($categories as $categoryId => $category) {

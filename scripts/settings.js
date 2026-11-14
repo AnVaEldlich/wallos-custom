@@ -1,6 +1,40 @@
 const saveIconContent = '<i class="fa-solid fa-check"></i>';
 const deleteIconContent = '<i class="fa-solid fa-trash-can"></i>';
 
+function savePreferredLanguage() {
+  const button = document.getElementById("savePreferredLanguage");
+  const select = document.getElementById("preferred_language");
+  button.disabled = true;
+
+  fetch("endpoints/settings/language.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": window.csrfToken,
+    },
+    body: JSON.stringify({ language: select.value }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        if (data.reload) {
+          location.reload();
+          return;
+        }
+        showSuccessMessage(data.message);
+        button.disabled = false;
+      } else {
+        showErrorMessage(data.message || translate("unknown_error"));
+        button.disabled = false;
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      showErrorMessage(translate("unknown_error"));
+      button.disabled = false;
+    });
+}
+
 function saveMonthlyBudget() {
   const button = document.getElementById("saveMonthlyBudget");
   button.disabled = true;
@@ -1031,6 +1065,36 @@ function storeSettingsOnDB(endpoint, value) {
         showErrorMessage(data.message);
       }
     });
+}
+
+function saveUsageDns() {
+  fetch("endpoints/settings/usage_dns.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": window.csrfToken,
+    },
+    body: JSON.stringify({
+      enabled: document.querySelector("#usagednsenabled").checked,
+      provider: document.querySelector("#usagednsprovider").value,
+      url: document.querySelector("#usagednsurl").value,
+      token: document.querySelector("#usagednstoken").value,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        showSuccessMessage(data.message);
+      } else {
+        showErrorMessage(data.message || translate("unknown_error"));
+      }
+    })
+    .catch(() => showErrorMessage(translate("unknown_error")));
+}
+
+function setDisplayCurrency() {
+  const displayCurrency = document.querySelector("#displaycurrency");
+  storeSettingsOnDB("display_currency", Number(displayCurrency.value));
 }
 
 function setShowMonthlyPrice() {

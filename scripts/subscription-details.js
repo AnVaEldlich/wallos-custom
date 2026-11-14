@@ -234,6 +234,27 @@ function renderSubscriptionDetails(subscription) {
     document.querySelector('#details-progress').style.width = progress + "%";
   }
 
+  const usage = subscription.usage || {};
+  const usageParts = [usage.total_label || strings.usage_none];
+  if (usage.measured_label) {
+    usageParts.push(strings.usage_measured + ' ' + usage.measured_label);
+  }
+  if (usage.estimated_label) {
+    usageParts.push(strings.usage_estimated + ' ' + usage.estimated_label);
+  }
+  if (usage.manual_label) {
+    usageParts.push(strings.usage_manual + ' ' + usage.manual_label);
+  }
+  if (usage.last_used) {
+    const lastUsed = new Date(usage.last_used * 1000);
+    usageParts.push(strings.usage_last_used + ' ' + lastUsed.toLocaleString(detailsLocale()));
+  }
+  if (usage.device) {
+    usageParts.push(strings.usage_device + ' ' + usage.device);
+  }
+  document.querySelector('#details-usage').textContent = usageParts.join(' · ');
+  document.querySelector('#details-usage-dates').value = '';
+
   document.querySelector('#details-next-payment').textContent = detailsFormatDate(subscription.next_payment);
   document.querySelector('#details-start-date').textContent = detailsFormatDate(subscription.start_date) || strings.none;
   const categoryIds = subscription.category_ids && subscription.category_ids.length > 0 ? subscription.category_ids : [subscription.category_id];
@@ -300,6 +321,11 @@ function renderSubscriptionDetails(subscription) {
     urlButton.classList.add('hide');
   }
 
+  document.querySelector('#details-edit-button').onclick = function (event) {
+    event.stopPropagation();
+    openDetailsEditor(event, subscription.id);
+  };
+
   document.querySelector('#details-export-button').onclick = function () {
     exportCalendar(subscription.id);
   };
@@ -307,6 +333,15 @@ function renderSubscriptionDetails(subscription) {
   document.querySelector('#subscription-details').classList.add('is-open');
   document.querySelector('#details-backdrop').classList.add('is-open');
   document.body.classList.add('details-open');
+}
+
+function openDetailsEditor(event, id) {
+  closeSubscriptionDetails();
+  if (typeof openEditSubscription === "function" && document.getElementById("subscription-form")) {
+    openEditSubscription(event, id);
+    return;
+  }
+  window.location.href = "subscriptions.php?edit=" + encodeURIComponent(id);
 }
 
 function closeSubscriptionDetails() {
@@ -327,6 +362,36 @@ document.addEventListener('DOMContentLoaded', function () {
       closeSubscriptionDetails();
     }
   });
+
+  const importButton = document.querySelector('#details-usage-import');
+  if (importButton) {
+    importButton.addEventListener('click', function () {
+      if (!currentDetailsId) {
+        return;
+      }
+      fetch('endpoints/usage/import.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': window.csrfToken,
+        },
+        body: JSON.stringify({
+          subscription_id: currentDetailsId,
+          dates: document.querySelector('#details-usage-dates').value,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            showSuccessMessage(data.message);
+            showSubscriptionDetails(null, currentDetailsId);
+          } else {
+            showErrorMessage(data.message || translate('unknown_error'));
+          }
+        })
+        .catch(() => showErrorMessage(translate('unknown_error')));
+    });
+  }
 });
 
 function decodeHtmlEntities(str) {

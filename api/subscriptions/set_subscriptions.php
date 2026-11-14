@@ -956,6 +956,9 @@ switch ($action) {
         $stmtCategories->bindParam(':subId', $subscriptionId, SQLITE3_INTEGER);
         $stmtCategories->execute();
 
+        require_once '../../includes/usage_sessions.php';
+        usage_delete_for_subscription_ids($db, $userId, [$subscriptionId]);
+
         $sqlDelete = "DELETE FROM subscriptions WHERE id = :subId AND user_id = :userId";
         $stmtDelete = $db->prepare($sqlDelete);
         $stmtDelete->bindParam(':subId', $subscriptionId, SQLITE3_INTEGER);

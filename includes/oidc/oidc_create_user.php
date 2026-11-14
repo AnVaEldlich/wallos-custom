@@ -113,6 +113,7 @@ $currencies = [
     ['name' => 'South African Rand', 'symbol' => 'R', 'code' => 'ZAR'],
     ['name' => 'Ukrainian Hryvnia', 'symbol' => '₴', 'code' => 'UAH'],
     ['name' => 'New Taiwan Dollar', 'symbol' => 'NT$', 'code' => 'TWD'],
+    ['name' => 'Colombian Peso', 'symbol' => 'COL$', 'code' => 'COP'],
 ];
 
 $stmt = $db->prepare("INSERT INTO currencies (name, symbol, code, rate, user_id) 

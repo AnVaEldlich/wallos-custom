@@ -11,6 +11,7 @@ require_once '../../includes/subscription_payers.php';
 require_once '../../includes/subscription_categories.php';
 require_once '../../includes/provider_catalog.php';
 require_once '../../includes/subscription_logo.php';
+require_once '../../includes/currency_amount.php';
 
 if (!file_exists('../../images/uploads/logos')) {
     mkdir('../../images/uploads/logos', 0777, true);
@@ -288,12 +289,22 @@ function rejectForeignId($message)
     exit();
 }
 
-$currStmt = $db->prepare("SELECT id FROM currencies WHERE id = :id AND user_id = :userId");
+$currStmt = $db->prepare("SELECT id, code FROM currencies WHERE id = :id AND user_id = :userId");
 $currStmt->bindParam(':id', $currencyId, SQLITE3_INTEGER);
 $currStmt->bindParam(':userId', $userId, SQLITE3_INTEGER);
 $currResult = $currStmt->execute();
-if (!$currResult || !$currResult->fetchArray()) {
+$currencyRow = $currResult ? $currResult->fetchArray(SQLITE3_ASSOC) : false;
+if (!$currencyRow) {
     rejectForeignId('The specified currency does not exist or does not belong to you.');
+}
+if (!currency_amount_is_valid($price, $currencyRow['code'])) {
+    $rule = currency_amount_rule($currencyRow['code']);
+    $message = str_replace(
+        ['{{currency}}', '{{minimum}}'],
+        [$currencyRow['code'], currency_amount_format_minimum($rule['minimum'])],
+        translate('invalid_currency_amount', $i18n)
+    );
+    rejectForeignId($message);
 }
 
 if (!categoriesBelongToUser($db, $userId, $categoryIds)) {

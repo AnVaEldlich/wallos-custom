@@ -121,6 +121,21 @@ function wallos_test_database()
             }
             copy(WALLOS_ROOT . '/endpoints/cronjobs/createdatabase.php', $sandbox . '/endpoints/cronjobs/createdatabase.php');
             copy(WALLOS_ROOT . '/includes/run_migrations.php', $sandbox . '/includes/run_migrations.php');
+            // Migrations 000062 and 000063 load these files from the sandbox.
+            // PHP treats that path as a different file from the application
+            // copy, so the sandbox file loads the real one only when the
+            // functions are not already declared.
+            foreach ([
+                'provider_catalog.php' => 'get_provider_catalog',
+                'subscription_logo.php' => 'resolve_provider_catalog_id_for_subscription',
+                'logo_theme_variant.php' => 'classifyLogoTextColor',
+                'ssrf_helper.php' => 'wallos_ip_is_private_or_reserved',
+            ] as $include => $function) {
+                file_put_contents(
+                    $sandbox . '/includes/' . $include,
+                    "<?php\nif (!function_exists(" . var_export($function, true) . ")) {\n    require_once " . var_export(WALLOS_ROOT . '/includes/' . $include, true) . ";\n}\n"
+                );
+            }
         }
 
         $databaseFile = $sandbox . '/db/wallos.db';

@@ -28,6 +28,7 @@ let i18n = {
   cant_disable_payment_in_use: "Can't disable payment in use",
   failed_save_payment_method: "Failed to save payment method",
   unknown_error: "Unknown error, please try again.",
+  invalid_currency_amount: "That amount is not valid for {{currency}}. The smallest amount is {{minimum}}.",
   delete_account_confirmation: "Are you sure you want to delete your account?",
   this_will_delete_all_data: "This will delete all your data and can't be undone. Continue?",
   success: "Success",
