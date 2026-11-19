@@ -24,9 +24,9 @@ function refresh_rate($db, $userId, $code)
     return $row ? (float) $row['rate'] : 0.0;
 }
 
-wallos_test('an interrupted refresh leaves the previous rates', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('an interrupted refresh leaves the previous rates', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $before = [refresh_rate($db, 1, 'EUR'), refresh_rate($db, 1, 'USD')];
 
@@ -48,9 +48,9 @@ wallos_test('an interrupted refresh leaves the previous rates', function () {
     $db->close();
 });
 
-wallos_test('a completed refresh commits every rate together', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('a completed refresh commits every rate together', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $db->exec('BEGIN');
 
@@ -71,9 +71,9 @@ wallos_test('a completed refresh commits every rate together', function () {
     $db->close();
 });
 
-wallos_test('one prepared statement serves the whole rate loop', function () {
-    $db = wallos_test_open_counting_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('one prepared statement serves the whole rate loop', function () {
+    $db = diamon_test_open_counting_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $db->resetQueryCount();
 
@@ -91,11 +91,11 @@ wallos_test('one prepared statement serves the whole rate loop', function () {
     $db->close();
 });
 
-wallos_test('both refresh paths wrap their writes in a transaction', function () {
+diamon_test('both refresh paths wrap their writes in a transaction', function () {
     // Structural guard: a future refresh path that autocommits per currency
     // fails here rather than shipping a half-converted rate set.
     foreach (['endpoints/cronjobs/updateexchange.php', 'endpoints/currency/update_exchange.php'] as $path) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $path);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $path);
 
         assert_contains("BEGIN", $source, $path . ' opens a transaction');
         assert_contains("COMMIT", $source, $path . ' commits it');

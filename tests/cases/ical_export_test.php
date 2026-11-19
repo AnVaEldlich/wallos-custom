@@ -13,14 +13,14 @@
   a user typed in a note).
 */
 
-require_once WALLOS_ROOT . '/includes/ical_helper.php';
+require_once DIAMON_ROOT . '/includes/ical_helper.php';
 
-wallos_test('a short line is returned unfolded', function () {
+diamon_test('a short line is returned unfolded', function () {
     assert_same('SUMMARY:Netflix', icalFold('SUMMARY:Netflix'),
         'nothing to fold, nothing changes');
 });
 
-wallos_test('a long line is folded at 75 octets, with a leading space on continuations', function () {
+diamon_test('a long line is folded at 75 octets, with a leading space on continuations', function () {
     $line = 'DESCRIPTION:' . str_repeat('a', 100);
     $folded = icalFold($line);
     $parts = explode("\r\n", $folded);
@@ -34,7 +34,7 @@ wallos_test('a long line is folded at 75 octets, with a leading space on continu
     }
 });
 
-wallos_test('folding a line and stripping the fold markers recovers the original bytes', function () {
+diamon_test('folding a line and stripping the fold markers recovers the original bytes', function () {
     $line = 'DESCRIPTION:Price: 28.00 EUR\\nNotes: ' . str_repeat('Família ', 20);
     $folded = icalFold($line);
     $unfolded = str_replace("\r\n ", '', $folded);
@@ -42,7 +42,7 @@ wallos_test('folding a line and stripping the fold markers recovers the original
     assert_same($line, $unfolded, 'folding is lossless');
 });
 
-wallos_test('folding never splits a multi-byte UTF-8 character across lines', function () {
+diamon_test('folding never splits a multi-byte UTF-8 character across lines', function () {
     // Every character here is a 2-byte UTF-8 sequence, chosen so a naive
     // byte-count split would land mid-character somewhere in 200 bytes.
     $line = 'DESCRIPTION:' . str_repeat('é', 100);
@@ -54,9 +54,9 @@ wallos_test('folding never splits a multi-byte UTF-8 character across lines', fu
     }
 });
 
-wallos_test('the two ICS export code paths no longer HTML-decode notes before escaping them', function () {
+diamon_test('the two ICS export code paths no longer HTML-decode notes before escaping them', function () {
     foreach (['endpoints/subscription/exportcalendar.php', 'api/subscriptions/get_ical_feed.php'] as $file) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $file);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $file);
 
         assert_not_contains("html_entity_decode(\$subscription['notes']", $source,
             $file . ': notes are no longer stored HTML-escaped, so decoding them here would corrupt a literal & or \' a user typed');

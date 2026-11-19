@@ -28,13 +28,13 @@ function theme_cookie_emitters()
 {
     $found = [];
 
-    $candidates = glob(WALLOS_ROOT . '/*.php');
-    $candidates[] = WALLOS_ROOT . '/includes/header.php';
+    $candidates = glob(DIAMON_ROOT . '/*.php');
+    $candidates[] = DIAMON_ROOT . '/includes/header.php';
 
     foreach ($candidates as $file) {
         foreach (preg_split('/\R/', file_get_contents($file)) as $line) {
             if (preg_match('/window\.(color_?theme|theme)\s*=/i', $line) === 1) {
-                $found[str_replace(WALLOS_ROOT . '/', '', $file)] = $line;
+                $found[str_replace(DIAMON_ROOT . '/', '', $file)] = $line;
             }
         }
     }
@@ -42,7 +42,7 @@ function theme_cookie_emitters()
     return $found;
 }
 
-wallos_test('no page writes a theme cookie into a script unencoded', function () {
+diamon_test('no page writes a theme cookie into a script unencoded', function () {
     $emitters = theme_cookie_emitters();
 
     // A guard that finds nothing passes every assertion after it.
@@ -58,7 +58,7 @@ wallos_test('no page writes a theme cookie into a script unencoded', function ()
     }
 });
 
-wallos_test('the value emitted was validated against a fixed list first', function () {
+diamon_test('the value emitted was validated against a fixed list first', function () {
     // The encoding stops the injection on its own. This stops the value
     // reaching the stylesheet ids and the theme-colour meta tag as something
     // that is not one of the themes, and it is what makes the encoded output
@@ -72,7 +72,7 @@ wallos_test('the value emitted was validated against a fixed list first', functi
     $checked = 0;
 
     foreach (array_keys(theme_cookie_emitters()) as $path) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $path);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $path);
 
         foreach ($sanitizers as $cookie => $sanitizer) {
             if (strpos($source, $cookie) === false) {

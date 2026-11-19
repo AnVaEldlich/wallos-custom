@@ -16,7 +16,7 @@ if (
     echo json_encode($response);
 } else {
     // Set the message parameters
-    $title = translate('wallos_notification', $i18n);
+    $title = translate('diamon_notification', $i18n);
     $message = translate('test_notification', $i18n);
 
     $botToken = $data["bottoken"];

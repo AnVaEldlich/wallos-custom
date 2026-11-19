@@ -86,13 +86,25 @@ $providerCatalogForDetails = get_provider_catalog();
       <dt><?= translate('usage', $i18n) ?></dt>
       <dd id="details-usage"></dd>
     </div>
-    <div class="details-item">
-      <dt><?= translate('usage_import_dates', $i18n) ?></dt>
-      <dd>
-        <input type="text" id="details-usage-dates" placeholder="2026-01-15, 2026-02-02">
-        <button type="button" class="button thin" id="details-usage-import"><?= translate('save', $i18n) ?></button>
-        <p class="settings-notes"><?= translate('usage_import_info', $i18n) ?></p>
-      </dd>
+    <div class="details-item hide" id="details-usage-measured-item">
+      <dt><?= translate('usage_measured', $i18n) ?></dt>
+      <dd id="details-usage-measured"></dd>
+    </div>
+    <div class="details-item hide" id="details-usage-estimated-item">
+      <dt><?= translate('usage_estimated', $i18n) ?></dt>
+      <dd id="details-usage-estimated"></dd>
+    </div>
+    <div class="details-item hide" id="details-usage-manual-item">
+      <dt><?= translate('usage_manual', $i18n) ?></dt>
+      <dd id="details-usage-manual"></dd>
+    </div>
+    <div class="details-item hide" id="details-usage-last-item">
+      <dt><?= translate('usage_last_used', $i18n) ?></dt>
+      <dd id="details-usage-last"></dd>
+    </div>
+    <div class="details-item hide" id="details-usage-device-item">
+      <dt><?= translate('usage_device', $i18n) ?></dt>
+      <dd id="details-usage-device"></dd>
     </div>
   </dl>
   <div class="details-notes hide" id="details-notes-item">

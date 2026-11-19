@@ -18,9 +18,13 @@ if (!headers_sent()) {
 // of the precached scripts and styles is part of the name as well: a changed
 // file changes this worker, the browser installs it and drops the old cache,
 // instead of serving the previous copy until the version is bumped.
-const STATIC_CACHE = 'static-cache-<?= $version ?>-<?= $assetsStamp ?>';
-const PAGES_CACHE = 'pages-cache-v1';
-const LOGOS_CACHE = 'logos-cache-v2';
+//
+// Every cache is prefixed with the product name. The unprefixed names used
+// before the rename to Diamon are not in validCaches, so the activate handler
+// below removes them on the first update.
+const STATIC_CACHE = 'diamon-static-<?= $version ?>-<?= $assetsStamp ?>';
+const PAGES_CACHE = 'diamon-pages-v1';
+const LOGOS_CACHE = 'diamon-logos-v2';
 
 // manifest.php is intentionally not precached here: it's per-user (theme
 // cookie dependent), so it falls through to the network-first handler below
@@ -47,6 +51,8 @@ const staticAssets = [
     'scripts/all.js',
     'scripts/common.js',
     'scripts/header-theme.js',
+    'scripts/header-notifications.js',
+    'scripts/minibot.js',
     'scripts/dashboard.js',
     'scripts/price-input.js',
     'scripts/subscriptions.js',
@@ -96,6 +102,7 @@ const staticAssets = [
     'scripts/libs/sortable.min.js',
     'scripts/libs/qrcode.min.js',
     'images/icon/favicon.ico',
+    'images/icon/favicon.svg',
     'images/icon/favicon-16x16.png',
     'images/icon/favicon-32x32.png',
     'images/icon/android-chrome-192x192.png',
@@ -106,8 +113,8 @@ const staticAssets = [
     'images/icon/apple-touch-icon-152.png',
     'images/icon/apple-touch-icon.png',
     'images/screenshots/desktop.png',
-    'images/siteicons/wallos.png',
-    'images/siteicons/walloswhite.png',
+    'images/siteicons/diamon.png',
+    'images/siteicons/diamonwhite.png',
     'images/siteimages/empty.png',
     'images/siteimages/mobilenav.png',
     'images/siteimages/mobilenavdark.png',
@@ -332,11 +339,11 @@ self.addEventListener('push', function (event) {
         try {
             data = event.data.json();
         } catch (e) {
-            data = { title: 'Wallos', body: event.data.text() };
+            data = { title: 'Diamon', body: event.data.text() };
         }
     }
 
-    const title = data.title || 'Wallos';
+    const title = data.title || 'Diamon';
     const options = {
         body: data.body || '',
         icon: 'images/icon/android-chrome-192x192.png',

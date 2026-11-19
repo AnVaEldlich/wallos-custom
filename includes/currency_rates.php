@@ -22,7 +22,7 @@
  * @param int|null $userId
  * @return array<int, float>
  */
-function wallos_currency_rates($db, $userId = null)
+function diamon_currency_rates($db, $userId = null)
 {
     // Keyed by the connection object itself: an id would be reused once a
     // connection is closed, and the next one would inherit stale rates.
@@ -72,9 +72,9 @@ function wallos_currency_rates($db, $userId = null)
  * @param int|null         $userId
  * @return float
  */
-function wallos_convert_price($price, $currencyId, $db, $userId = null)
+function diamon_convert_price($price, $currencyId, $db, $userId = null)
 {
-    $rates = wallos_currency_rates($db, $userId);
+    $rates = diamon_currency_rates($db, $userId);
     $rate = $rates[(int) $currencyId] ?? null;
 
     if (empty($rate)) {
@@ -98,13 +98,13 @@ function wallos_convert_price($price, $currencyId, $db, $userId = null)
  * @param int|null         $userId
  * @return float
  */
-function wallos_convert_between($price, $fromCurrencyId, $toCurrencyId, $db, $userId = null)
+function diamon_convert_between($price, $fromCurrencyId, $toCurrencyId, $db, $userId = null)
 {
     if ((int) $fromCurrencyId === (int) $toCurrencyId) {
         return (float) $price;
     }
 
-    $rates = wallos_currency_rates($db, $userId);
+    $rates = diamon_currency_rates($db, $userId);
     $fromRate = $rates[(int) $fromCurrencyId] ?? null;
     $toRate = $rates[(int) $toCurrencyId] ?? null;
 

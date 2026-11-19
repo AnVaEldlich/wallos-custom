@@ -9,7 +9,7 @@ $data = json_decode($postData, true);
 
 $oidcEnabled = isset($data['oidcEnabled']) ? $data['oidcEnabled'] : 0;
 
-if (wallos_has_oidc_env_value('OIDC_ENABLED')) {
+if (diamon_has_oidc_env_value('OIDC_ENABLED')) {
     die(json_encode([
         "success" => false,
         "message" => "OIDC enablement is managed by the OIDC_ENABLED environment variable."

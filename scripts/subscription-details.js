@@ -27,7 +27,7 @@ function showSubscriptionDetails(event, id) {
     });
 }
 
-// Wallos language codes (zh_cn, pt_br, sr_lat) are not BCP 47 tags, which Intl rejects
+// Diamon language codes (zh_cn, pt_br, sr_lat) are not BCP 47 tags, which Intl rejects
 function detailsLocale() {
   return (window.lang || 'en').replace('sr_lat', 'sr-Latn').replace(/_/g, '-');
 }
@@ -60,6 +60,32 @@ function detailsFormatDate(dateString) {
   } catch (e) {
     return date.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' });
   }
+}
+
+function detailsFormatDateTime(timestamp) {
+  const date = new Date(Number(timestamp) * 1000);
+  if (isNaN(date)) {
+    return "";
+  }
+  const options = { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+  try {
+    return date.toLocaleString(detailsLocale(), options);
+  } catch (e) {
+    return date.toLocaleString('en', options);
+  }
+}
+
+function setDetailsItem(itemSelector, valueSelector, text) {
+  const item = document.querySelector(itemSelector);
+  if (!item) {
+    return;
+  }
+  if (!text) {
+    item.classList.add('hide');
+    return;
+  }
+  item.classList.remove('hide');
+  document.querySelector(valueSelector).textContent = text;
 }
 
 function detailsBillingCycleText(cycle, frequency) {
@@ -235,25 +261,20 @@ function renderSubscriptionDetails(subscription) {
   }
 
   const usage = subscription.usage || {};
-  const usageParts = [usage.total_label || strings.usage_none];
-  if (usage.measured_label) {
-    usageParts.push(strings.usage_measured + ' ' + usage.measured_label);
-  }
-  if (usage.estimated_label) {
-    usageParts.push(strings.usage_estimated + ' ' + usage.estimated_label);
-  }
-  if (usage.manual_label) {
-    usageParts.push(strings.usage_manual + ' ' + usage.manual_label);
-  }
-  if (usage.last_used) {
-    const lastUsed = new Date(usage.last_used * 1000);
-    usageParts.push(strings.usage_last_used + ' ' + lastUsed.toLocaleString(detailsLocale()));
-  }
-  if (usage.device) {
-    usageParts.push(strings.usage_device + ' ' + usage.device);
-  }
-  document.querySelector('#details-usage').textContent = usageParts.join(' · ');
-  document.querySelector('#details-usage-dates').value = '';
+  document.querySelector('#details-usage').textContent = usage.total_label || strings.usage_none;
+  const breakdowns = [
+    ['#details-usage-measured-item', '#details-usage-measured', usage.measured_label],
+    ['#details-usage-estimated-item', '#details-usage-estimated', usage.estimated_label],
+    ['#details-usage-manual-item', '#details-usage-manual', usage.manual_label],
+  ];
+  const filledBreakdowns = breakdowns.filter(function (row) { return row[2]; });
+  const showBreakdown = filledBreakdowns.length > 1
+    || (filledBreakdowns.length === 1 && filledBreakdowns[0][2] !== usage.total_label);
+  breakdowns.forEach(function (row) {
+    setDetailsItem(row[0], row[1], showBreakdown ? row[2] : '');
+  });
+  setDetailsItem('#details-usage-last-item', '#details-usage-last', usage.last_used ? detailsFormatDateTime(usage.last_used) : '');
+  setDetailsItem('#details-usage-device-item', '#details-usage-device', usage.device || '');
 
   document.querySelector('#details-next-payment').textContent = detailsFormatDate(subscription.next_payment);
   document.querySelector('#details-start-date').textContent = detailsFormatDate(subscription.start_date) || strings.none;
@@ -362,36 +383,6 @@ document.addEventListener('DOMContentLoaded', function () {
       closeSubscriptionDetails();
     }
   });
-
-  const importButton = document.querySelector('#details-usage-import');
-  if (importButton) {
-    importButton.addEventListener('click', function () {
-      if (!currentDetailsId) {
-        return;
-      }
-      fetch('endpoints/usage/import.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': window.csrfToken,
-        },
-        body: JSON.stringify({
-          subscription_id: currentDetailsId,
-          dates: document.querySelector('#details-usage-dates').value,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            showSuccessMessage(data.message);
-            showSubscriptionDetails(null, currentDetailsId);
-          } else {
-            showErrorMessage(data.message || translate('unknown_error'));
-          }
-        })
-        .catch(() => showErrorMessage(translate('unknown_error')));
-    });
-  }
 });
 
 function decodeHtmlEntities(str) {

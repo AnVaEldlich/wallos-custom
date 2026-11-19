@@ -1,8 +1,8 @@
 <?php
 
-require_once WALLOS_ROOT . '/includes/subscription_logo.php';
+require_once DIAMON_ROOT . '/includes/subscription_logo.php';
 
-wallos_test('subscription logo resolves catalogue icons by id and by name', function () {
+diamon_test('subscription logo resolves catalogue icons by id and by name', function () {
     $byId = [
         'name' => 'Netflix',
         'logo' => '',
@@ -24,17 +24,17 @@ wallos_test('subscription logo resolves catalogue icons by id and by name', func
     assert_contains('spotify.png', subscription_catalog_logo_url_for_row($byName), 'spotify slug in url');
 });
 
-wallos_test('subscription card render never falls back to the Wallos site logo markup', function () {
+diamon_test('subscription card render never falls back to the Diamon site logo markup', function () {
     $html = render_subscription_card_logo([
         'name' => 'Netflix',
         'logo' => '',
         'provider_catalog_id' => 'netflix',
     ]);
     assert_contains('subscription-catalog-logo', $html, 'uses catalogue image');
-    assert_not_contains('siteicons', $html, 'does not embed Wallos svg logo');
+    assert_not_contains('siteicons', $html, 'does not embed Diamon svg logo');
 });
 
-wallos_test('catalogue icon wins over an uploaded logo for catalogue providers', function () {
+diamon_test('catalogue icon wins over an uploaded logo for catalogue providers', function () {
     $html = render_subscription_card_logo([
         'name' => 'Netflix',
         'logo' => 'images/uploads/logos/custom-netflix.png',

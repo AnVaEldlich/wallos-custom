@@ -17,8 +17,8 @@
   The bodies are unchanged, so every existing caller keeps working.
 */
 
-wallos_test('every refusal in the endpoint guard sets a status code', function () {
-    $source = file_get_contents(WALLOS_ROOT . '/includes/validate_endpoint.php');
+diamon_test('every refusal in the endpoint guard sets a status code', function () {
+    $source = file_get_contents(DIAMON_ROOT . '/includes/validate_endpoint.php');
 
     $refusals = substr_count($source, 'echo json_encode(["success" => false');
     $statuses = substr_count($source, 'http_response_code(');
@@ -31,11 +31,11 @@ wallos_test('every refusal in the endpoint guard sets a status code', function (
     assert_contains('http_response_code(401)', $source, 'no session is 401');
 });
 
-wallos_test('the status is set before the body, or it is not sent at all', function () {
+diamon_test('the status is set before the body, or it is not sent at all', function () {
     // PHP sends the headers with the first byte of output, so a status set
     // after echo is silently ignored. This is the ordering that makes the
     // change work at all.
-    $source = file_get_contents(WALLOS_ROOT . '/includes/validate_endpoint.php');
+    $source = file_get_contents(DIAMON_ROOT . '/includes/validate_endpoint.php');
 
     foreach (['405', '403', '401'] as $code) {
         $status = strpos($source, 'http_response_code(' . $code . ')');
@@ -46,8 +46,8 @@ wallos_test('the status is set before the body, or it is not sent at all', funct
     }
 });
 
-wallos_test('an administrative endpoint refuses a non-admin with a status too', function () {
-    $source = file_get_contents(WALLOS_ROOT . '/includes/validate_endpoint_admin.php');
+diamon_test('an administrative endpoint refuses a non-admin with a status too', function () {
+    $source = file_get_contents(DIAMON_ROOT . '/includes/validate_endpoint_admin.php');
 
     assert_contains('http_response_code(403)', $source, 'the admin guard answers 403');
     assert_true(
@@ -56,10 +56,10 @@ wallos_test('an administrative endpoint refuses a non-admin with a status too', 
     );
 });
 
-wallos_test('the refusal bodies are unchanged', function () {
+diamon_test('the refusal bodies are unchanged', function () {
     // The point of keeping them: every caller in the application reads
     // data.success, and this change must not ask any of them to be updated.
-    $source = file_get_contents(WALLOS_ROOT . '/includes/validate_endpoint.php');
+    $source = file_get_contents(DIAMON_ROOT . '/includes/validate_endpoint.php');
 
     assert_contains('"message" => "Invalid request method"', $source, 'the method message is as it was');
     assert_contains('"message" => "Invalid CSRF token"', $source, 'and the CSRF one');

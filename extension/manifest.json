@@ -1,15 +1,25 @@
 {
   "manifest_version": 3,
-  "name": "Wallos usage",
-  "version": "1.2.0",
-  "description": "Records time on matching subscription sites, including background playback, with a 1s heartbeat.",
-  "permissions": ["tabs", "idle", "storage", "alarms"],
+  "name": "Diamon usage",
+  "version": "1.4.0",
+  "description": "Records time while you work on a matching subscription tab, and notices when a service confirms a cancellation you started from Diamon.",
+  "permissions": ["tabs", "idle", "storage", "alarms", "scripting"],
   "host_permissions": ["http://*/*", "https://*/*"],
   "background": {
     "service_worker": "background.js"
   },
   "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "action": {
-    "default_title": "Wallos usage"
+    "default_title": "Diamon usage",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
   }
 }

@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../includes/instance_config.php';
 
 // The admin row with anything the deployment owns applied over it, so this job
 // uses the same mail server the admin page shows.
-$admin = wallos_get_admin_settings($db);
+$admin = diamon_get_admin_settings($db);
 
 $query = "SELECT * FROM password_resets WHERE email_sent = 0";
 $stmt = $db->prepare($query);
@@ -29,7 +29,7 @@ if ($rows) {
         $smtpPort = $admin['smtp_port'];
         $smtpUsername = $admin['smtp_username'];
         $smtpPassword = $admin['smtp_password'];
-        $fromEmail = empty($admin['from_email']) ? 'wallos@wallosapp.com' : $admin['from_email'];
+        $fromEmail = empty($admin['from_email']) ? 'noreply@diamon.localhost' : $admin['from_email'];
         $encryption = $admin['encryption'];
         $server_url = $admin['server_url'];
         $smtpAuth = (isset($admin["smtp_username"]) && $admin["smtp_username"] != "") || (isset($admin["smtp_password"]) && $admin["smtp_password"] != "");
@@ -57,8 +57,8 @@ if ($rows) {
             foreach ($rows as $user) {
                 $mail->addAddress($user['email']);
                 $mail->isHTML(true);
-                $mail->Subject = 'Wallos - Reset Password';
-                $mail->Body = '<img src="' . $server_url . '/images/siteicons/wallos.png" alt="Logo" />
+                $mail->Subject = 'Diamon - Reset Password';
+                $mail->Body = '<img src="' . $server_url . '/images/siteicons/diamon.png" alt="Diamon" width="215" height="82" />
                     <br>
                     A password reset was requested for your account.
                     <br>

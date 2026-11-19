@@ -22,7 +22,7 @@
  * @return bool false whenever the answer is not certain, so an uncertain case
  *              refreshes rather than silently skipping
  */
-function wallos_rates_refreshed_today($db, $userId)
+function diamon_rates_refreshed_today($db, $userId)
 {
     $statement = $db->prepare('SELECT date FROM last_exchange_update WHERE user_id = :userId');
 

@@ -1,8 +1,8 @@
 <?php
 
-require_once WALLOS_ROOT . '/includes/currency_amount.php';
+require_once DIAMON_ROOT . '/includes/currency_amount.php';
 
-wallos_test('currency amounts follow the smallest real unit of each currency', function () {
+diamon_test('currency amounts follow the smallest real unit of each currency', function () {
     assert_true(!currency_amount_is_valid(10, 'COP'), '10 COP does not exist');
     assert_true(!currency_amount_is_valid(49, 'COP'), 'below the 50 peso coin');
     assert_true(currency_amount_is_valid(50, 'COP'), '50 COP is the smallest coin');

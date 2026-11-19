@@ -44,7 +44,7 @@ if ($smtpPortInt < 1 || $smtpPortInt > 65535) {
 // can read and post, so the server decides rather than the page: an environment
 // value copied into the database would outlive the variable that set it, and
 // removing the variable would then silently restore a stale mail server.
-$managedFields = wallos_get_effective_admin_configuration($db)['managed_fields'];
+$managedFields = diamon_get_effective_admin_configuration($db)['managed_fields'];
 $encryption = empty($data['encryption']) ? 'tls' : $data['encryption'];
 
 $columns = [

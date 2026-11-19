@@ -161,7 +161,7 @@ if (isset($_GET['search'])) {
     // Cache successful responses: repeat searches are common while filling the
     // form, and both engines rate-limit aggressively (Brave after ~2 requests).
     $cacheFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR
-        . 'wallos-logo-search-v2-' . md5($source . '|' . strtolower(urldecode($searchTerm))) . '.json';
+        . 'diamon-logo-search-v2-' . md5($source . '|' . strtolower(urldecode($searchTerm))) . '.json';
     if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < 3600) {
         echo file_get_contents($cacheFile);
         exit;

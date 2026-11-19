@@ -27,10 +27,10 @@
  */
 function settings_api_source()
 {
-    return file_get_contents(WALLOS_ROOT . '/api/settings/set_settings.php');
+    return file_get_contents(DIAMON_ROOT . '/api/settings/set_settings.php');
 }
 
-wallos_test('no write in the settings API is discarded', function () {
+diamon_test('no write in the settings API is discarded', function () {
     // The whole file rather than the four lines that had it: a fifth write
     // added later is caught by the same rule, without anybody remembering to
     // come back here.
@@ -49,7 +49,7 @@ wallos_test('no write in the settings API is discarded', function () {
         . 'discarded one: ' . implode(', ', $discarded) . ')');
 });
 
-wallos_test('a failure in either replacement is answered, not reported as saved', function () {
+diamon_test('a failure in either replacement is answered, not reported as saved', function () {
     // The file already knew how to say this; it simply did not say it here.
     $source = settings_api_source();
 
@@ -67,14 +67,14 @@ wallos_test('a failure in either replacement is answered, not reported as saved'
         'and so is the colour result');
 });
 
-wallos_test('the second row really does get in, and reading the result is what stops it', function () {
+diamon_test('the second row really does get in, and reading the result is what stops it', function () {
     // Not a demonstration of the file — a demonstration of what its previous
     // shape allowed, against the real schema. A trigger refuses the delete,
     // which is how a locked database or a read-only disk looks from here:
     // SQLite reports all of them through the statement result, and through
     // nothing else.
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $save = function ($css) use ($db) {
         $stmt = $db->prepare('INSERT INTO custom_css_style (css, user_id) VALUES (:css, 1)');

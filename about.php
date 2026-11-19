@@ -1,11 +1,11 @@
 <?php
 require_once 'includes/header.php';
 
-$wallosIsUpToDate = true;
+$diamonIsUpToDate = true;
 if (!is_null($settings['latest_version'])) {
     $latestVersion = $settings['latest_version'];
     if (version_compare($version, $latestVersion) == -1) {
-        $wallosIsUpToDate = false;
+        $diamonIsUpToDate = false;
     }
 }
 ?>
@@ -19,7 +19,7 @@ if (!is_null($settings['latest_version'])) {
         <div class="credits-list">
             <div>
                 <h3>
-                    Wallos <?= $version ?> <?= $demoMode ? "Demo" : "" ?>
+                    Diamon <?= $version ?> <?= $demoMode ? "Demo" : "" ?>
                 </h3>
                 <span>
                     <?= translate('release_notes', $i18n) ?>
@@ -29,7 +29,7 @@ if (!is_null($settings['latest_version'])) {
                     </a>
                 </span>
             </div>
-            <?php if (!$wallosIsUpToDate): ?>
+            <?php if (!$diamonIsUpToDate): ?>
                 <div class="update-available">
                     <h3>
                         <i class="fa-solid fa-info-circle"></i>
@@ -59,6 +59,16 @@ if (!is_null($settings['latest_version'])) {
                 <span>
                     GitHub
                     <a href="https://github.com/ellite/Wallos/issues" target="_blank"
+                        title="<?= translate('external_url', $i18n) ?>" rel="noreferrer">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                </span>
+            </div>
+            <div>
+                <h3><?= translate('original_project', $i18n) ?></h3>
+                <span>
+                    Wallos
+                    <a href="https://github.com/ellite/Wallos" target="_blank"
                         title="<?= translate('external_url', $i18n) ?>" rel="noreferrer">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </a>

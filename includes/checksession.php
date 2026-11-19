@@ -71,7 +71,7 @@ if (isset($_GET['code']) && isset($_GET['state'])) {
             $userData['avatar'] = "0";
         }
     } else {
-        if (!isset($_COOKIE['wallos_login'])) {
+        if (diamon_login_cookie_value() === null) {
             $db->close();
             header("Location: login.php");
             exit();

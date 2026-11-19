@@ -12,12 +12,12 @@ require_once __DIR__ . '/bootstrap.php';
 
 $filter = $argv[1] ?? null;
 
-if (is_dir(WALLOS_TEST_TMP)) {
-    foreach (glob(WALLOS_TEST_TMP . '/case-*.db') as $leftover) {
+if (is_dir(DIAMON_TEST_TMP)) {
+    foreach (glob(DIAMON_TEST_TMP . '/case-*.db') as $leftover) {
         @unlink($leftover);
     }
 } else {
-    mkdir(WALLOS_TEST_TMP, 0700, true);
+    mkdir(DIAMON_TEST_TMP, 0700, true);
 }
 
 $files = glob(__DIR__ . '/cases/*_test.php');
@@ -39,24 +39,24 @@ $started = microtime(true);
 $passed = 0;
 $failedTests = [];
 
-foreach ($GLOBALS['wallos_tests'] as $test) {
+foreach ($GLOBALS['diamon_tests'] as $test) {
     if ($filter !== null
         && stripos($test['name'], $filter) === false
         && stripos(basename((new ReflectionFunction($test['body']))->getFileName()), $filter) === false) {
         continue;
     }
 
-    $GLOBALS['wallos_test_current'] = $test['name'];
-    $before = count($GLOBALS['wallos_test_failures']);
+    $GLOBALS['diamon_test_current'] = $test['name'];
+    $before = count($GLOBALS['diamon_test_failures']);
 
     try {
         $test['body']();
     } catch (Throwable $error) {
-        wallos_test_fail('threw ' . get_class($error) . ': ' . $error->getMessage()
+        diamon_test_fail('threw ' . get_class($error) . ': ' . $error->getMessage()
             . ' @ ' . basename($error->getFile()) . ':' . $error->getLine());
     }
 
-    $newFailures = array_slice($GLOBALS['wallos_test_failures'], $before);
+    $newFailures = array_slice($GLOBALS['diamon_test_failures'], $before);
 
     if ($newFailures === []) {
         $passed++;
@@ -72,16 +72,16 @@ foreach ($GLOBALS['wallos_tests'] as $test) {
     }
 }
 
-foreach (glob(WALLOS_TEST_TMP . '/case-*.db') as $leftover) {
+foreach (glob(DIAMON_TEST_TMP . '/case-*.db') as $leftover) {
     @unlink($leftover);
 }
 
 $duration = round((microtime(true) - $started) * 1000);
-$failures = count($GLOBALS['wallos_test_failures']);
+$failures = count($GLOBALS['diamon_test_failures']);
 
 echo "\n";
 echo $failures === 0
-    ? sprintf("\033[32m%d tests passed\033[0m (%d assertions, %dms)\n", $passed, $GLOBALS['wallos_test_assertions'], $duration)
+    ? sprintf("\033[32m%d tests passed\033[0m (%d assertions, %dms)\n", $passed, $GLOBALS['diamon_test_assertions'], $duration)
     : sprintf("\033[31m%d failing assertion(s)\033[0m in %d test(s), %d passed (%dms)\n",
         $failures, count($failedTests), $passed, $duration);
 

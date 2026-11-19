@@ -27,6 +27,13 @@ $categoriesStmt->execute();
 
 usage_delete_for_subscription_ids($db, $userId, [$subscriptionId]);
 
+$dismissalsStmt = $db->prepare("DELETE FROM usage_prompt_dismissals WHERE user_id = :userId AND subscription_id = :subscriptionId");
+if ($dismissalsStmt) {
+    $dismissalsStmt->bindParam(':subscriptionId', $subscriptionId, SQLITE3_INTEGER);
+    $dismissalsStmt->bindParam(':userId', $userId, SQLITE3_INTEGER);
+    $dismissalsStmt->execute();
+}
+
 $deleteQuery = "DELETE FROM subscriptions WHERE id = :subscriptionId AND user_id = :userId";
 $deleteStmt = $db->prepare($deleteQuery);
 $deleteStmt->bindParam(':subscriptionId', $subscriptionId, SQLITE3_INTEGER);

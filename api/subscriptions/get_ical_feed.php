@@ -32,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" || $_SERVER["REQUEST_METHOD"] === "GET
 
     function getPriceConverted($price, $currency, $database)
     {
-        return wallos_convert_price($price, $currency, $database);
+        return diamon_convert_price($price, $currency, $database);
     }
 
     // Get user from API key
@@ -157,7 +157,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" || $_SERVER["REQUEST_METHOD"] === "GET
     header('Content-Type: text/calendar; charset=utf-8');
     header('Content-Disposition: attachment; filename="subscriptions.ics"');
 
-    $icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Wallos//iCalendar//EN\nNAME:Wallos\nX-WR-CALNAME:Wallos\n";
+    $icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Diamon//iCalendar//EN\nNAME:Diamon\nX-WR-CALNAME:Diamon\n";
 
     foreach ($subscriptionsToReturn as $subscription) {
         $subscription['payer_user'] = $subscription['payer_user_name'];
@@ -167,6 +167,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" || $_SERVER["REQUEST_METHOD"] === "GET
         $subscription['trigger'] = ($subscription['notify_days_before'] == -1) ? $globalNotificationDays : ($subscription['notify_days_before'] ?: 1);
         $subscription['price'] = number_format($subscription['price'], 2);
 
+        // The UID keeps its pre-rename (Wallos) form so calendars that already
+        // imported these events update them instead of adding duplicates.
         $uid = 'wallos-subscription-' . $subscription['id'] . '@wallos';
         $summary = icalEscape(html_entity_decode($subscription['name'], ENT_QUOTES, 'UTF-8'));
         $notes = icalEscape($subscription['notes']);

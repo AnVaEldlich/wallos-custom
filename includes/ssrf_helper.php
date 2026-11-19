@@ -1,6 +1,6 @@
 <?php
 
-function wallos_get_ssrf_allowlist_env_value()
+function diamon_get_ssrf_allowlist_env_value()
 {
     $value = getenv('SSRF_ALLOWLIST');
     if ($value !== false) {
@@ -27,7 +27,7 @@ function wallos_get_ssrf_allowlist_env_value()
  * @param SQLite3 $db
  * @return array{allowlist: string[], raw: string, is_managed: bool, allow_standard_users: bool}
  */
-function wallos_get_effective_ssrf_allowlist($db)
+function diamon_get_effective_ssrf_allowlist($db)
 {
     $stmt = $db->prepare('SELECT local_webhook_notifications_allowlist, allow_standard_users_local_webhooks FROM admin LIMIT 1');
     $result = $stmt->execute();
@@ -35,7 +35,7 @@ function wallos_get_effective_ssrf_allowlist($db)
     $dbValue = $row ? $row['local_webhook_notifications_allowlist'] : '';
     $allowStandardUsers = $row ? (bool) $row['allow_standard_users_local_webhooks'] : false;
 
-    $envValue = wallos_get_ssrf_allowlist_env_value();
+    $envValue = diamon_get_ssrf_allowlist_env_value();
     $isManaged = $envValue !== null && trim((string) $envValue) !== '';
     $rawValue = $isManaged ? $envValue : $dbValue;
 
@@ -72,7 +72,7 @@ function is_cgnat_ip($ip) {
  * and Teredo (2001:0000::/32). Returns a dotted-quad string, or null when the
  * address is not one of these forms.
  */
-function wallos_extract_embedded_ipv4($ip) {
+function diamon_extract_embedded_ipv4($ip) {
     $packed = @inet_pton($ip);
     if ($packed === false || strlen($packed) !== 16) {
         return null;
@@ -124,16 +124,16 @@ function wallos_extract_embedded_ipv4($ip) {
  * legitimate destination has no reason to be reached through a transition
  * relay, and admins can still permit specific hosts via the allowlist.
  */
-function wallos_ip_is_private_or_reserved($ip) {
+function diamon_ip_is_private_or_reserved($ip) {
     if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false
         || is_cgnat_ip($ip)) {
         return true;
     }
 
     // filter_var (above) misses IPv6 transition prefixes; catch them here.
-    // wallos_extract_embedded_ipv4() returns null for plain IPv4 and for
+    // diamon_extract_embedded_ipv4() returns null for plain IPv4 and for
     // ordinary public IPv6, so only transition forms are blocked here.
-    if (wallos_extract_embedded_ipv4($ip) !== null) {
+    if (diamon_extract_embedded_ipv4($ip) !== null) {
         return true;
     }
 
@@ -175,10 +175,10 @@ function validate_webhook_url_for_ssrf($url, $db, $i18n, $userId = null) {
     $ipWithPort = $port ? $ip . ':' . $port : $ip;
 
     // Check if it's a private IP
-    $is_private = wallos_ip_is_private_or_reserved($ip);
+    $is_private = diamon_ip_is_private_or_reserved($ip);
 
     if ($is_private) {
-        $ssrfConfiguration = wallos_get_effective_ssrf_allowlist($db);
+        $ssrfConfiguration = diamon_get_effective_ssrf_allowlist($db);
 
         if ($userId != 1 && !$ssrfConfiguration['allow_standard_users']) {
             die(json_encode([
@@ -227,10 +227,10 @@ function validate_smtp_host($host, $port, $db) {
     // DNS failure — gethostbyname returns the input unchanged on failure
     if ($ip === $host && filter_var($host, FILTER_VALIDATE_IP) === false) return false;
 
-    $is_private = wallos_ip_is_private_or_reserved($ip);
+    $is_private = diamon_ip_is_private_or_reserved($ip);
 
     if ($is_private) {
-        $allowlist = wallos_get_effective_ssrf_allowlist($db)['allowlist'];
+        $allowlist = diamon_get_effective_ssrf_allowlist($db)['allowlist'];
 
         $hostWithPort = $host . ':' . $port;
         $ipWithPort   = $ip   . ':' . $port;
@@ -290,13 +290,13 @@ function validate_oidc_endpoint_url($url, $db) {
     $validIps = [];
 
     foreach ($ips as $ip) {
-        if (!wallos_ip_is_private_or_reserved($ip)) {
+        if (!diamon_ip_is_private_or_reserved($ip)) {
             $validIps[] = $ip;
             continue;
         }
 
         if ($allowlist === null) {
-            $allowlist = wallos_get_effective_ssrf_allowlist($db)['allowlist'];
+            $allowlist = diamon_get_effective_ssrf_allowlist($db)['allowlist'];
         }
 
         $hostWithPort = $host . ':' . $targetPort;
@@ -351,10 +351,10 @@ function is_url_safe_for_ssrf($url, $db, $userId = null) {
     $hostWithPort = $port ? $urlHost . ':' . $port : $urlHost;
     $ipWithPort   = $port ? $ip . ':' . $port : $ip;
 
-    $is_private = wallos_ip_is_private_or_reserved($ip);
+    $is_private = diamon_ip_is_private_or_reserved($ip);
 
     if ($is_private) {
-        $ssrfConfiguration = wallos_get_effective_ssrf_allowlist($db);
+        $ssrfConfiguration = diamon_get_effective_ssrf_allowlist($db);
 
         if ($userId != 1 && !$ssrfConfiguration['allow_standard_users']) {
             return false; // private, user is not admin, and standard users aren't opted in — skip silently

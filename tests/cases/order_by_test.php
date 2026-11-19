@@ -15,15 +15,15 @@
   sorting by a constant is never what anybody means.
 */
 
-wallos_test('no query sorts by a string constant', function () {
+diamon_test('no query sorts by a string constant', function () {
     $offenders = [];
     $checked = 0;
 
     $directory = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator(WALLOS_ROOT, RecursiveDirectoryIterator::SKIP_DOTS));
+        new RecursiveDirectoryIterator(DIAMON_ROOT, RecursiveDirectoryIterator::SKIP_DOTS));
 
     foreach ($directory as $file) {
-        $path = str_replace(WALLOS_ROOT . '/', '', $file->getPathname());
+        $path = str_replace(DIAMON_ROOT . '/', '', $file->getPathname());
 
         if ($file->getExtension() !== 'php'
             || strpos($path, 'libs/') === 0

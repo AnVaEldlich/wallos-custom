@@ -9,6 +9,7 @@ let i18n = {
   add_subscription: "Añadir suscripción",
   provider_catalog_confirm_leave: "¿Volver al catálogo? Se perderán los cambios no guardados.",
   confirm_delete_subscription: "¿Estás seguro de que quieres eliminar esta suscripción?",
+  confirm_cancel_subscription: "¿Cancelar esta suscripción? Se guarda para que puedas retomarla después.",
   // Settings
   network_response_error: "Error en la respuesta de la red",
   failed_add_member: "Error al añadir miembro",

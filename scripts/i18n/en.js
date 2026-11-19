@@ -9,6 +9,7 @@ let i18n = {
   add_subscription: "Add subscription",
   provider_catalog_confirm_leave: "Leave the form and return to the catalogue? Unsaved changes will be lost.",
   confirm_delete_subscription: "Are you sure you want to delete this subscription?",
+  confirm_cancel_subscription: "Cancel this subscription? It stays saved so you can resume it later.",
   // Settings
   network_response_error: "Network response was not ok",
   failed_add_member: "Failed to add member",

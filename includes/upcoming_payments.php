@@ -104,7 +104,7 @@ function convert_dashboard_total($amount, $mainCurrencyId, $settings, $currencie
         $targetId = $mainCurrencyId;
     }
 
-    $price = wallos_convert_between((float) $amount, $mainCurrencyId, $targetId, $db, $userId);
+    $price = diamon_convert_between((float) $amount, $mainCurrencyId, $targetId, $db, $userId);
 
     return [
         'price' => $price,
@@ -141,7 +141,7 @@ function resolve_dashboard_display_price($price, $currencyId, $mainCurrencyId, $
     }
 
     if ($currencyId !== $targetId && isset($currencies[$currencyId]) && isset($currencies[$targetId])) {
-        $price = wallos_convert_between($price, $currencyId, $targetId, $db, $userId);
+        $price = diamon_convert_between($price, $currencyId, $targetId, $db, $userId);
     }
 
     return [

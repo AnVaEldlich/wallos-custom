@@ -1,5 +1,48 @@
 <?php
 
+if (!defined('DIAMON_LOGIN_COOKIE')) {
+    define('DIAMON_LOGIN_COOKIE', 'diamon_login');
+    // The name the cookie had before the project was renamed from Wallos. It is
+    // still read, so "stay logged in" sessions survive the upgrade, and is
+    // swapped for the current name the first time it is used.
+    define('DIAMON_LEGACY_LOGIN_COOKIE', 'wallos_login');
+}
+
+/**
+ * The raw remember-me cookie, under its current or its pre-rename name.
+ *
+ * @return string|null
+ */
+function diamon_login_cookie_value()
+{
+    if (isset($_COOKIE[DIAMON_LOGIN_COOKIE])) {
+        return $_COOKIE[DIAMON_LOGIN_COOKIE];
+    }
+
+    if (isset($_COOKIE[DIAMON_LEGACY_LOGIN_COOKIE])) {
+        return $_COOKIE[DIAMON_LEGACY_LOGIN_COOKIE];
+    }
+
+    return null;
+}
+
+/**
+ * Re-issues a cookie that only exists under the pre-rename name.
+ */
+function diamon_migrate_legacy_login_cookie()
+{
+    if (isset($_COOKIE[DIAMON_LOGIN_COOKIE]) || !isset($_COOKIE[DIAMON_LEGACY_LOGIN_COOKIE]) || headers_sent()) {
+        return;
+    }
+
+    setcookie(DIAMON_LOGIN_COOKIE, $_COOKIE[DIAMON_LEGACY_LOGIN_COOKIE], [
+        'expires' => time() + (30 * 24 * 60 * 60),
+        'samesite' => 'Lax',
+        'httponly' => true,
+    ]);
+    setcookie(DIAMON_LEGACY_LOGIN_COOKIE, '', time() - 3600);
+}
+
 /**
  * Attempts to restore a logged-in session from the persistent "remember me"
  * login cookie (set at login when "stay logged in" is checked).
@@ -16,11 +59,12 @@
  */
 function restoreSessionFromRememberMeCookie($db)
 {
-    if (!isset($_COOKIE['wallos_login'])) {
+    $cookieValue = diamon_login_cookie_value();
+    if ($cookieValue === null) {
         return false;
     }
 
-    $cookie = explode('|', $_COOKIE['wallos_login'], 3);
+    $cookie = explode('|', $cookieValue, 3);
     if (count($cookie) !== 3) {
         return false;
     }
@@ -70,6 +114,8 @@ function restoreSessionFromRememberMeCookie($db)
     $_SESSION['loggedin'] = true;
     $_SESSION['main_currency'] = $main_currency;
     $_SESSION['userId'] = $userId;
+
+    diamon_migrate_legacy_login_cookie();
 
     return $userData;
 }

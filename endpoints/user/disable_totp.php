@@ -19,7 +19,7 @@ require_once '../../includes/validate_endpoint.php';
  * @param  int     $userId
  * @return bool false when nothing was changed
  */
-function wallos_disable_totp($db, $userId)
+function diamon_disable_totp($db, $userId)
 {
     if ($db->exec('BEGIN') === false) {
         return false;
@@ -108,7 +108,7 @@ if (isset($data['totpCode']) && $data['totpCode'] != "") {
     $totp->setPeriod(30);
 
     if ($totp->verify($totp_code, null, 15)) {
-        if (!wallos_disable_totp($db, $userId)) {
+        if (!diamon_disable_totp($db, $userId)) {
             die(json_encode([
                 "success" => false,
                 "message" => translate('error', $i18n)
@@ -134,7 +134,7 @@ if (isset($data['totpCode']) && $data['totpCode'] != "") {
         // Search for the normalized code
         if (($key = array_search($totp_code, $normalizedBackupCodes)) !== false) {
             // Match found, disable TOTP
-            if (!wallos_disable_totp($db, $userId)) {
+            if (!diamon_disable_totp($db, $userId)) {
                 die(json_encode([
                     "success" => false,
                     "message" => translate('error', $i18n)

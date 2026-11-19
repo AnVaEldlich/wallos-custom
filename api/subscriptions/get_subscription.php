@@ -167,7 +167,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" || $_SERVER["REQUEST_METHOD"] === "GET
         $canConvertCurrency = !empty($lastExchangeUpdate['date']);
 
         if ($canConvertCurrency) {
-            $subscription['price'] = wallos_convert_price(
+            $subscription['price'] = diamon_convert_price(
                 $subscription['price'],
                 $subscription['currency_id'],
                 $db,

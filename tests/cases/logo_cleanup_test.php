@@ -2,12 +2,12 @@
 // deleteLogoFileIfUnused() removes a detached logo file, but only when no other
 // row still names it (clone.php shares a filename between two subscriptions).
 
-require_once WALLOS_ROOT . '/includes/logo_cleanup.php';
+require_once DIAMON_ROOT . '/includes/logo_cleanup.php';
 
 // A logos directory holding the given files, under the test tmp tree.
 function logo_cleanup_dir($files)
 {
-    $dir = WALLOS_TEST_TMP . '/logos-' . uniqid('', true) . '/';
+    $dir = DIAMON_TEST_TMP . '/logos-' . uniqid('', true) . '/';
     mkdir($dir, 0777, true);
     foreach ($files as $name) {
         file_put_contents($dir . $name, 'x');
@@ -21,16 +21,16 @@ function logo_cleanup_add_subscription($db, $userId, $logo, $variant = null)
                           VALUES (:userId, :name, 1, :currencyId, :next, 3, 1, 0, :logo, :variant)');
     $stmt->bindValue(':userId', $userId, SQLITE3_INTEGER);
     $stmt->bindValue(':name', 'sub-' . $logo, SQLITE3_TEXT);
-    $stmt->bindValue(':currencyId', wallos_test_currency_id($userId, 0), SQLITE3_INTEGER);
+    $stmt->bindValue(':currencyId', diamon_test_currency_id($userId, 0), SQLITE3_INTEGER);
     $stmt->bindValue(':next', date('Y-m-d', strtotime('+10 days')), SQLITE3_TEXT);
     $stmt->bindValue(':logo', $logo, SQLITE3_TEXT);
     $stmt->bindValue(':variant', $variant, $variant === null ? SQLITE3_NULL : SQLITE3_TEXT);
     $stmt->execute();
 }
 
-wallos_test('an unreferenced logo file is deleted', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('an unreferenced logo file is deleted', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $dir = logo_cleanup_dir(['orphan.png']);
     deleteLogoFileIfUnused($db, 'orphan.png', $dir);
@@ -39,9 +39,9 @@ wallos_test('an unreferenced logo file is deleted', function () {
     $db->close();
 });
 
-wallos_test('a logo still used by a subscription is kept', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('a logo still used by a subscription is kept', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
     logo_cleanup_add_subscription($db, 1, 'used.png');
 
     $dir = logo_cleanup_dir(['used.png']);
@@ -51,9 +51,9 @@ wallos_test('a logo still used by a subscription is kept', function () {
     $db->close();
 });
 
-wallos_test('a file still used only as a themed variant is kept', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('a file still used only as a themed variant is kept', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
     logo_cleanup_add_subscription($db, 1, 'logo.png', 'logo-variant.png');
 
     $dir = logo_cleanup_dir(['logo-variant.png']);
@@ -63,9 +63,9 @@ wallos_test('a file still used only as a themed variant is kept', function () {
     $db->close();
 });
 
-wallos_test('a logo shared by a clone survives deleting the original', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('a logo shared by a clone survives deleting the original', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
     // Two subscriptions naming the same file, as clone.php leaves them.
     logo_cleanup_add_subscription($db, 1, 'shared.png');
     logo_cleanup_add_subscription($db, 1, 'shared.png');
@@ -85,9 +85,9 @@ wallos_test('a logo shared by a clone survives deleting the original', function 
     $db->close();
 });
 
-wallos_test('a logo still used by a payment method is kept', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('a logo still used by a payment method is kept', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
     $db->exec("INSERT INTO payment_methods (name, icon, enabled, user_id) VALUES ('Card', 'pm-icon.png', 1, 1)");
 
     $dir = logo_cleanup_dir(['pm-icon.png']);
@@ -97,10 +97,10 @@ wallos_test('a logo still used by a payment method is kept', function () {
     $db->close();
 });
 
-wallos_test('deleting an account clears its logos but not another account\'s', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 2, 'alice');
-    wallos_test_create_user($db, 3, 'bob');
+diamon_test('deleting an account clears its logos but not another account\'s', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 2, 'alice');
+    diamon_test_create_user($db, 3, 'bob');
 
     logo_cleanup_add_subscription($db, 2, 'alice-1.png', 'alice-1-variant.png');
     logo_cleanup_add_subscription($db, 2, 'alice-2.png');
@@ -136,9 +136,9 @@ wallos_test('deleting an account clears its logos but not another account\'s', f
     $db->close();
 });
 
-wallos_test('the helper stays inside the logos directory', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('the helper stays inside the logos directory', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $dir = logo_cleanup_dir([]);
     $outside = dirname(rtrim($dir, '/')) . '/keep.png';

@@ -15,7 +15,7 @@ if (!isset($data['local_webhook_notifications_allowlist'])) {
     die();
 }
 
-if (wallos_get_effective_ssrf_allowlist($db)['is_managed']) {
+if (diamon_get_effective_ssrf_allowlist($db)['is_managed']) {
     echo json_encode([
         "success" => false,
         "message" => translate('ssrf_allowlist_env_managed', $i18n)

@@ -30,6 +30,8 @@ function matchSubscription(hostname, watchlist) {
  *
  * Priority:
  * 1. Focused tab matching the watchlist, only when the user is not idle.
+ *    Silent services (Duolingo, Notion, and the rest) use this path: the
+ *    active tab counts while the user is working in it, with no audio required.
  * 2. Otherwise the lowest-id audible tab that matches the watchlist
  *    (background playback; idle does not block this path).
  */
@@ -61,11 +63,34 @@ function resolveTrackedMatch({ idleState, focusedHostname, audibleTabs, watchlis
   return null;
 }
 
+/**
+ * The service worker sleeps between alarms. A gap up to maxGapSeconds is still
+ * the same visit and should be counted. A longer gap is time we did not see,
+ * so the session ends at the last heartbeat.
+ */
+function sessionEndedAt(lastSeen, now, maxGapSeconds) {
+  lastSeen = Number(lastSeen || 0);
+  now = Number(now || 0);
+  maxGapSeconds = Number(maxGapSeconds || 0);
+  if (lastSeen <= 0 || now <= lastSeen || now - lastSeen > maxGapSeconds) {
+    return lastSeen > 0 && now - lastSeen > maxGapSeconds ? lastSeen : now;
+  }
+  return now;
+}
+
+function sessionCanContinue(lastSeen, now, maxGapSeconds) {
+  lastSeen = Number(lastSeen || 0);
+  now = Number(now || 0);
+  return lastSeen > 0 && now >= lastSeen && now - lastSeen <= Number(maxGapSeconds || 0);
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     hostMatches,
     hostnameFromUrl,
     matchSubscription,
     resolveTrackedMatch,
+    sessionEndedAt,
+    sessionCanContinue,
   };
 }

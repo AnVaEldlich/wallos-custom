@@ -52,7 +52,7 @@ function frankfurter_http_get($url, $context)
     return array_shift($GLOBALS['frankfurter_test_answers']);
 }
 
-require_once WALLOS_ROOT . '/includes/frankfurter.php';
+require_once DIAMON_ROOT . '/includes/frankfurter.php';
 
 /**
  * Queues one provider answer and forgets the requests made so far.
@@ -172,7 +172,7 @@ function frankfurter_write_rates($db, $userId, $mainCurrencyCode, $rates)
  */
 function frankfurter_source($path)
 {
-    return file_get_contents(WALLOS_ROOT . '/' . $path);
+    return file_get_contents(DIAMON_ROOT . '/' . $path);
 }
 
 /**
@@ -239,7 +239,7 @@ function frankfurter_fetch_paths()
     ];
 }
 
-wallos_test('the v2 answer is a flat list of records, not a rates object', function () {
+diamon_test('the v2 answer is a flat list of records, not a rates object', function () {
     // Measured 2026-09-13, base=CHF, quotes=EUR,USD. One record per quote, with
     // the code in a "quote" field rather than as the key of a "rates" object.
     $body = '[{"date":"2026-09-13","base":"CHF","quote":"EUR","rate":1.0593},'
@@ -258,7 +258,7 @@ wallos_test('the v2 answer is a flat list of records, not a rates object', funct
         'an object with a rates key is not a v2 answer and is refused rather than half read');
 });
 
-wallos_test('an empty answer is a refusal, not a refresh that priced nothing', function () {
+diamon_test('an empty answer is a refusal, not a refresh that priced nothing', function () {
     // Measured 2026-09-13: base=BTC answers HTTP 200 with `[]`. That decodes to
     // a perfectly good array, so a caller checking only is_array() calls it a
     // success, stores nothing, and stamps the rates as refreshed - after which
@@ -275,9 +275,9 @@ wallos_test('an empty answer is a refusal, not a refresh that priced nothing', f
         'the message names the base, rather than sending the reader after an outage');
 });
 
-wallos_test('a malformed code is held back before the request is made', function () {
+diamon_test('a malformed code is held back before the request is made', function () {
     // Measured 2026-09-13: `quotes=USD,XX!` answers 422 and returns nothing at
-    // all, not USD. A currency in Wallos is three free-text fields, so an
+    // all, not USD. A currency in Diamon is three free-text fields, so an
     // invented code is accepted and stored, and one of those would otherwise
     // stop every other currency in the same account from refreshing.
     list($accepted, $rejected) = frankfurter_partition_codes(['usd', 'XX!', 'TOOLONG', 'EUR', '']);
@@ -294,7 +294,7 @@ wallos_test('a malformed code is held back before the request is made', function
         'and not the one that would have refused the whole request');
 });
 
-wallos_test('the provider explains which currency it objected to, and that is what is reported', function () {
+diamon_test('the provider explains which currency it objected to, and that is what is reported', function () {
     // Its errors are {"status":422,"message":"invalid currency: XYZ"}, which is
     // neither the {"error":{"info":...}} of fixer nor the {"success":false} the
     // save endpoints look for. The named code is the only thing in the whole
@@ -318,7 +318,7 @@ wallos_test('the provider explains which currency it objected to, and that is wh
     assert_contains('422', $answer['message'] ?? '', 'alongside the status it came with');
 });
 
-wallos_test('the request is the v2 one, in the account\'s own currency', function () {
+diamon_test('the request is the v2 one, in the account\'s own currency', function () {
     frankfurter_expect('[{"date":"2026-09-13","base":"CHF","quote":"EUR","rate":1.0593}]', 200);
     $answer = frankfurter_latest_rates('chf', 'EUR,CHF');
 
@@ -334,7 +334,7 @@ wallos_test('the request is the v2 one, in the account\'s own currency', functio
     assert_same(['EUR' => 1.0593], $answer['rates'] ?? [], 'the answer comes back as a map');
 });
 
-wallos_test('nothing is asked when no code could be asked about', function () {
+diamon_test('nothing is asked when no code could be asked about', function () {
     // An empty quotes list is not refused: measured 2026-09-13 it answers 200
     // with `[]`, which is the same body an unknown base returns and would be
     // reported as one.
@@ -346,7 +346,7 @@ wallos_test('nothing is asked when no code could be asked about', function () {
     assert_contains('XX!', $answer['message'] ?? '', 'the codes that could not be asked about are named');
 });
 
-wallos_test('an outage is reported as an outage', function () {
+diamon_test('an outage is reported as an outage', function () {
     // Without ignore_errors a 422 would arrive here as false too, and the two
     // would be indistinguishable. This is the case where there genuinely was no
     // response: PHP leaves the header array unset for it.
@@ -359,7 +359,7 @@ wallos_test('an outage is reported as an outage', function () {
         'and is not reported as the one thing it is not');
 });
 
-wallos_test('every fetch path goes through the one shared helper', function () {
+diamon_test('every fetch path goes through the one shared helper', function () {
     foreach (frankfurter_fetch_paths() as $path) {
         $source = frankfurter_source($path);
 
@@ -382,7 +382,7 @@ wallos_test('every fetch path goes through the one shared helper', function () {
         . ' from the network being down');
 });
 
-wallos_test('the fetch paths write the provider\'s own numbers, undivided', function () {
+diamon_test('the fetch paths write the provider\'s own numbers, undivided', function () {
     // The provider prices in any currency it lists, so it is asked in the
     // user's own main currency. Nothing is divided afterwards; leaving the
     // fixer arithmetic in place would divide by the main currency's own rate,
@@ -403,8 +403,8 @@ wallos_test('the fetch paths write the provider\'s own numbers, undivided', func
             . ' application rather than a number read out of a response');
     }
 
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     // A third currency the provider will not price. Measured 2026-09-13,
     // quotes=EUR,BTC answers 200 with EUR alone and drops BTC in silence.
@@ -432,7 +432,7 @@ wallos_test('the fetch paths write the provider\'s own numbers, undivided', func
     $db->close();
 });
 
-wallos_test('a refresh that priced nothing is reported instead of passing in silence', function () {
+diamon_test('a refresh that priced nothing is reported instead of passing in silence', function () {
     // An unknown base and a code the provider refuses both leave a body with no
     // rates in it, and the branch that stores rates simply did not run - ending
     // the request with nothing said at all, which reads exactly like the
@@ -459,12 +459,12 @@ wallos_test('a refresh that priced nothing is reported instead of passing in sil
     }
 });
 
-wallos_test('a refresh that priced nothing leaves the last update date alone', function () {
+diamon_test('a refresh that priced nothing leaves the last update date alone', function () {
     // The date is what the freshness check reads to skip a refresh for the rest
     // of the day. Stamping it on a failed refresh would hide the failure until
     // tomorrow.
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     foreach (['endpoints/currency/update_exchange.php', 'endpoints/cronjobs/updateexchange.php'] as $path) {
         $block = frankfurter_block(frankfurter_source($path), 'if ($apiData !== null && isset($apiData[\'rates\'])) {');
@@ -481,9 +481,9 @@ wallos_test('a refresh that priced nothing leaves the last update date alone', f
     $db->close();
 });
 
-wallos_test('choosing the keyless provider keeps the key of the one before it', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('choosing the keyless provider keeps the key of the one before it', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $stmt = $db->prepare("INSERT INTO fixer (api_key, provider, user_id) VALUES ('kept-fixer-key', 0, 1)");
     $stmt->execute();
@@ -502,12 +502,12 @@ wallos_test('choosing the keyless provider keeps the key of the one before it', 
     $db->close();
 });
 
-wallos_test('replacing the row instead of updating it is what loses the key', function () {
+diamon_test('replacing the row instead of updating it is what loses the key', function () {
     // Guards the regression itself. The save endpoints delete the row before
     // they write the new one, and the key field is empty while a keyless
     // provider is selected, so taking that path here is how the key goes.
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $stmt = $db->prepare("INSERT INTO fixer (api_key, provider, user_id) VALUES ('kept-fixer-key', 0, 1)");
     $stmt->execute();
@@ -522,13 +522,13 @@ wallos_test('replacing the row instead of updating it is what loses the key', fu
     $db->close();
 });
 
-wallos_test('an update that changes nothing still counts as a row', function () {
+diamon_test('an update that changes nothing still counts as a row', function () {
     // frankfurter_save_provider() only inserts when the update matched no row,
     // and SQLite counting a same value update as a change is what carries that.
     // If it ever stopped, saving the provider twice would add a second row for
     // the user.
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     frankfurter_save_provider($db, 1);
     frankfurter_save_provider($db, 1);
@@ -539,7 +539,7 @@ wallos_test('an update that changes nothing still counts as a row', function () 
     $db->close();
 });
 
-wallos_test('both save endpoints settle the keyless provider before the delete', function () {
+diamon_test('both save endpoints settle the keyless provider before the delete', function () {
     foreach (frankfurter_save_paths() as $path => $header) {
         $source = frankfurter_source($path);
         $branch = strpos($source, $header);
@@ -579,7 +579,7 @@ wallos_test('both save endpoints settle the keyless provider before the delete',
     }
 });
 
-wallos_test('saving the keyless provider sends nothing over the wire', function () {
+diamon_test('saving the keyless provider sends nothing over the wire', function () {
     // There is no key to check, so a validation request would be a round trip
     // spent confirming that an empty string is empty - and one that fails the
     // save when the provider happens to be down.
@@ -596,13 +596,13 @@ wallos_test('saving the keyless provider sends nothing over the wire', function 
     }
 });
 
-wallos_test('an empty key on the keyless provider counts as a configured provider', function () {
+diamon_test('an empty key on the keyless provider counts as a configured provider', function () {
     // calendar.php and includes/stats_calculations.php decide whether to warn
     // that currencies cannot be converted, and they decide it on the row, not on
     // the key. The saved row therefore has to exist even though there is nothing
     // to put in api_key.
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     frankfurter_save_provider($db, 1);
 
@@ -622,7 +622,7 @@ wallos_test('an empty key on the keyless provider counts as a configured provide
     $db->close();
 });
 
-wallos_test('the keyless provider is offered and named', function () {
+diamon_test('the keyless provider is offered and named', function () {
     assert_contains('<option value="2"', frankfurter_source('settings.php'),
         'the settings page offers the third provider');
     assert_contains('frankfurter.dev', frankfurter_source('settings.php'),
@@ -653,7 +653,7 @@ function frankfurter_expect_sequence($answers)
     }
 }
 
-wallos_test('a code the provider refuses is dropped, and the rest still refresh', function () {
+diamon_test('a code the provider refuses is dropped, and the rest still refresh', function () {
     // Measured 2026-09-13: a well-formed code the catalogue does not carry is
     // not always dropped in silence. quotes=EUR,USD,BTC answers 200 without
     // BTC, but quotes=EUR,USD,ETH answers 422 and takes EUR and USD with it.
@@ -678,7 +678,7 @@ wallos_test('a code the provider refuses is dropped, and the rest still refresh'
         'and does not ask again for the code that was refused');
 });
 
-wallos_test('every code refused means there is nothing left to retry with', function () {
+diamon_test('every code refused means there is nothing left to retry with', function () {
     frankfurter_expect_sequence([
         ['{"status":422,"message":"invalid currency: ETH,XYZ"}', 422],
     ]);
@@ -690,7 +690,7 @@ wallos_test('every code refused means there is nothing left to retry with', func
     assert_contains('ETH,XYZ', $answer['message'] ?? '', 'which still names the codes');
 });
 
-wallos_test('a refusal that names nothing is left standing', function () {
+diamon_test('a refusal that names nothing is left standing', function () {
     // The degradation path, and the reason the retry is safe to have: if the
     // message ever stops carrying codes, nothing is dropped, nothing is asked
     // again, and the refusal is reported exactly as it would have been.
@@ -704,7 +704,7 @@ wallos_test('a refusal that names nothing is left standing', function () {
     assert_true(!isset($answer['rates']), 'and the refusal stands');
 });
 
-wallos_test('the refused codes are read out of the provider\'s own message', function () {
+diamon_test('the refused codes are read out of the provider\'s own message', function () {
     assert_same(['ETH'], frankfurter_refused_codes(
         ['status' => 422, 'message' => 'invalid currency: ETH']), 'one code');
     assert_same(['ETH', 'XYZ', 'QQQ'], frankfurter_refused_codes(
@@ -725,13 +725,13 @@ wallos_test('the refused codes are read out of the provider\'s own message', fun
             'an answer naming no code drops nothing: ' . var_export($unusable, true));
     }
 
-    // A currency in Wallos is three free-text fields, so a message naming
+    // A currency in Diamon is three free-text fields, so a message naming
     // something that is not a code must not cost somebody a currency.
     assert_same([], frankfurter_refused_codes(
         ['message' => 'invalid currency: Lunarium']), 'only three-letter codes are acted on');
 });
 
-wallos_test('both endpoints that report a refresh name what was not priced', function () {
+diamon_test('both endpoints that report a refresh name what was not priced', function () {
     foreach ([
         'endpoints/currency/update_exchange.php',
         'endpoints/cronjobs/updateexchange.php',

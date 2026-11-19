@@ -11,6 +11,8 @@ const {
   hostMatches,
   matchSubscription,
   resolveTrackedMatch,
+  sessionEndedAt,
+  sessionCanContinue,
 } = require('../extension/tracking.js');
 
 const watchlist = [
@@ -93,6 +95,27 @@ test('audible candidates prefer the lowest tab id for stability', () => {
     watchlist,
   });
   assert.equal(match.id, 2);
+});
+
+test('a focused silent service counts without audio', () => {
+  const lessons = watchlist.concat([{ id: 3, hosts: ['duolingo.com'] }]);
+  const match = resolveTrackedMatch({
+    idleState: 'active',
+    focusedHostname: 'www.duolingo.com',
+    audibleTabs: [],
+    watchlist: lessons,
+  });
+  assert.equal(match.id, 3);
+});
+
+test('a quiet minute on the same tab still belongs to the session', () => {
+  assert.equal(sessionCanContinue(1000, 1060, 180), true);
+  assert.equal(sessionEndedAt(1000, 1060, 180), 1060);
+});
+
+test('a long gap ends the session at the last heartbeat', () => {
+  assert.equal(sessionCanContinue(1000, 2000, 180), false);
+  assert.equal(sessionEndedAt(1000, 2000, 180), 1000);
 });
 
 test('ambiguous host matches are ignored', () => {

@@ -1,9 +1,9 @@
 <?php
 
-require_once WALLOS_ROOT . '/includes/usage_sessions.php';
-require_once WALLOS_ROOT . '/includes/usage_hosts.php';
+require_once DIAMON_ROOT . '/includes/usage_sessions.php';
+require_once DIAMON_ROOT . '/includes/usage_hosts.php';
 
-wallos_test('usage duration keeps sub-minute time in seconds', function () {
+diamon_test('usage duration keeps sub-minute time in seconds', function () {
     assert_same('1 s', usage_format_duration(1), 'one second stays one second');
     assert_same('59 s', usage_format_duration(59), '59 seconds does not round up');
     assert_same('1 min 0 s', usage_format_duration(60), 'one minute keeps its seconds');
@@ -11,7 +11,7 @@ wallos_test('usage duration keeps sub-minute time in seconds', function () {
     assert_same('1 h 1 min 1 s', usage_format_duration(3661), 'hours include minute and second remainders');
 });
 
-wallos_test('a fresh active extension session advances until its heartbeat expires', function () {
+diamon_test('a fresh active extension session advances until its heartbeat expires', function () {
     $session = [[
         'started_at' => 1000,
         'ended_at' => 1060,
@@ -31,9 +31,9 @@ wallos_test('a fresh active extension session advances until its heartbeat expir
     assert_same(false, $staleSummary['live'], 'a stale heartbeat is no longer live');
 });
 
-wallos_test('the active extension heartbeat is saved and can be stopped', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('the active extension heartbeat is saved and can be stopped', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
     $stmt = $db->prepare("INSERT INTO subscriptions (name, price, currency_id, next_payment, cycle, frequency, user_id, inactive)
         VALUES ('Netflix', 12, 1, '2026-12-01', 3, 1, 1, 0)");
     $stmt->execute();
@@ -64,7 +64,7 @@ wallos_test('the active extension heartbeat is saved and can be stopped', functi
     $db->close();
 });
 
-wallos_test('overlapping sessions from two sources count once', function () {
+diamon_test('overlapping sessions from two sources count once', function () {
     $summary = usage_summarize_sessions([
         ['started_at' => 1000, 'ended_at' => 4600, 'confidence' => 'measured', 'device' => 'laptop'],
         ['started_at' => 2000, 'ended_at' => 5000, 'confidence' => 'estimated', 'device' => 'tv'],
@@ -77,7 +77,7 @@ wallos_test('overlapping sessions from two sources count once', function () {
     assert_same(3600 + 400, $summary['measured'] + $summary['estimated'] + $summary['manual'], 'the breakdown adds up to the total');
 });
 
-wallos_test('a measured stretch hides the estimated and manual time underneath it', function () {
+diamon_test('a measured stretch hides the estimated and manual time underneath it', function () {
     $summary = usage_summarize_sessions([
         ['started_at' => 0, 'ended_at' => 100, 'confidence' => 'measured', 'device' => ''],
         ['started_at' => 0, 'ended_at' => 100, 'confidence' => 'estimated', 'device' => ''],
@@ -92,7 +92,7 @@ wallos_test('a measured stretch hides the estimated and manual time underneath i
     assert_same('phone', $summary['device'], 'the latest end names the device');
 });
 
-wallos_test('a zero-length import updates last use and adds no time', function () {
+diamon_test('a zero-length import updates last use and adds no time', function () {
     $summary = usage_summarize_sessions([
         ['started_at' => 50, 'ended_at' => 50, 'confidence' => 'estimated', 'device' => 'import'],
     ]);
@@ -101,14 +101,14 @@ wallos_test('a zero-length import updates last use and adds no time', function (
     assert_same(50, $summary['last_used'], 'the point is still a last use');
 });
 
-wallos_test('a host matches the service and not a lookalike name', function () {
+diamon_test('a host matches the service and not a lookalike name', function () {
     assert_true(usage_host_matches('www.netflix.com', 'netflix.com'), 'a subdomain counts');
     assert_true(usage_host_matches('netflix.com', 'netflix.com'), 'the host itself counts');
     assert_true(!usage_host_matches('notnetflix.com', 'netflix.com'), 'a suffix without a dot does not count');
     assert_true(!usage_host_matches('netflix.com.evil.test', 'netflix.com'), 'a longer name does not count');
 });
 
-wallos_test('two subscriptions on the same host are skipped unless one comes from the catalogue', function () {
+diamon_test('two subscriptions on the same host are skipped unless one comes from the catalogue', function () {
     $custom = ['id' => 1, 'catalog' => false, 'hosts' => ['netflix.com'], 'dns_hosts' => ['netflix.com'], 'packages' => []];
     $catalog = ['id' => 2, 'catalog' => true, 'hosts' => ['netflix.com'], 'dns_hosts' => ['netflix.com'], 'packages' => []];
     $other = ['id' => 3, 'catalog' => false, 'hosts' => ['netflix.com'], 'dns_hosts' => ['netflix.com'], 'packages' => []];
@@ -117,8 +117,8 @@ wallos_test('two subscriptions on the same host are skipped unless one comes fro
     assert_same(null, usage_match_target([$custom, $other], 'www.netflix.com', 'hosts'), 'two custom entries are ambiguous');
 });
 
-wallos_test('dns queries within fifteen minutes become one estimated session', function () {
-    require_once WALLOS_ROOT . '/includes/usage_dns.php';
+diamon_test('dns queries within fifteen minutes become one estimated session', function () {
+    require_once DIAMON_ROOT . '/includes/usage_dns.php';
 
     $targets = [[
         'id' => 7,

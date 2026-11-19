@@ -26,7 +26,7 @@
  */
 function oidc_state_spawn($sessionDir, $sessionId, $body)
 {
-    $script = tempnam(sys_get_temp_dir(), 'wallos_oidc_state_');
+    $script = tempnam(sys_get_temp_dir(), 'diamon_oidc_state_');
     $out = $script . '.out';
 
     file_put_contents($script,
@@ -35,7 +35,7 @@ function oidc_state_spawn($sessionDir, $sessionId, $body)
         . 'ini_set("session.use_cookies", "0");' . "\n"
         . 'session_id(' . var_export($sessionId, true) . ');' . "\n"
         . 'session_start();' . "\n"
-        . 'require ' . var_export(WALLOS_ROOT . '/includes/oidc/session_persist.php', true) . ';' . "\n"
+        . 'require ' . var_export(DIAMON_ROOT . '/includes/oidc/session_persist.php', true) . ';' . "\n"
         . $body . "\n");
 
     exec('php ' . escapeshellarg($script) . ' > ' . escapeshellarg($out) . ' 2>&1 &');
@@ -43,8 +43,8 @@ function oidc_state_spawn($sessionDir, $sessionId, $body)
     return $out;
 }
 
-wallos_test('the state is gone from the session file before the exchange finishes', function () {
-    $dir = sys_get_temp_dir() . '/wallos-oidc-state-' . bin2hex(random_bytes(6));
+diamon_test('the state is gone from the session file before the exchange finishes', function () {
+    $dir = sys_get_temp_dir() . '/diamon-oidc-state-' . bin2hex(random_bytes(6));
     mkdir($dir, 0700, true);
     $sessionId = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
@@ -87,11 +87,11 @@ wallos_test('the state is gone from the session file before the exchange finishe
     rmdir($dir);
 });
 
-wallos_test('both places that consume the state write it out', function () {
+diamon_test('both places that consume the state write it out', function () {
     // The refusal path removes the state too. Left in memory there, a retry of
     // a callback that was already refused would be checked against a state
     // that should no longer exist.
-    $source = file_get_contents(WALLOS_ROOT . '/includes/checksession.php');
+    $source = file_get_contents(DIAMON_ROOT . '/includes/checksession.php');
 
     assert_same(2, substr_count($source, "unset(\$_SESSION['oidc_state']);"),
         'the state is consumed in two places');

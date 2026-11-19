@@ -1,22 +1,22 @@
 <?php
 /*
-  Minimal test harness for Wallos.
+  Minimal test harness for Diamon.
 
-  Wallos vendors its libraries instead of using Composer, so the tests follow
+  Diamon vendors its libraries instead of using Composer, so the tests follow
   the same principle: no external dependency, just PHP and the SQLite
   extension the application already requires.
 
-  A test file registers cases with wallos_test() and asserts with the assert_*
+  A test file registers cases with diamon_test() and asserts with the assert_*
   helpers. tests/run.php discovers and runs them.
 */
 
-define('WALLOS_ROOT', dirname(__DIR__));
-define('WALLOS_TEST_TMP', sys_get_temp_dir() . '/wallos-tests');
+define('DIAMON_ROOT', dirname(__DIR__));
+define('DIAMON_TEST_TMP', sys_get_temp_dir() . '/diamon-tests');
 
-$GLOBALS['wallos_tests'] = [];
-$GLOBALS['wallos_test_failures'] = [];
-$GLOBALS['wallos_test_assertions'] = 0;
-$GLOBALS['wallos_test_current'] = null;
+$GLOBALS['diamon_tests'] = [];
+$GLOBALS['diamon_test_failures'] = [];
+$GLOBALS['diamon_test_assertions'] = 0;
+$GLOBALS['diamon_test_current'] = null;
 
 /**
  * Registers one test case.
@@ -24,34 +24,34 @@ $GLOBALS['wallos_test_current'] = null;
  * @param string   $name
  * @param callable $body
  */
-function wallos_test($name, callable $body)
+function diamon_test($name, callable $body)
 {
-    $GLOBALS['wallos_tests'][] = ['name' => $name, 'body' => $body];
+    $GLOBALS['diamon_tests'][] = ['name' => $name, 'body' => $body];
 }
 
-function wallos_test_fail($message)
+function diamon_test_fail($message)
 {
-    $GLOBALS['wallos_test_failures'][] = [
-        'test' => $GLOBALS['wallos_test_current'],
+    $GLOBALS['diamon_test_failures'][] = [
+        'test' => $GLOBALS['diamon_test_current'],
         'message' => $message,
     ];
 }
 
 function assert_true($condition, $message)
 {
-    $GLOBALS['wallos_test_assertions']++;
+    $GLOBALS['diamon_test_assertions']++;
 
     if (!$condition) {
-        wallos_test_fail($message);
+        diamon_test_fail($message);
     }
 }
 
 function assert_same($expected, $actual, $message)
 {
-    $GLOBALS['wallos_test_assertions']++;
+    $GLOBALS['diamon_test_assertions']++;
 
     if ($expected !== $actual) {
-        wallos_test_fail(sprintf(
+        diamon_test_fail(sprintf(
             '%s (expected %s, got %s)',
             $message,
             var_export($expected, true),
@@ -62,10 +62,10 @@ function assert_same($expected, $actual, $message)
 
 function assert_equals($expected, $actual, $message)
 {
-    $GLOBALS['wallos_test_assertions']++;
+    $GLOBALS['diamon_test_assertions']++;
 
     if ($expected != $actual) {
-        wallos_test_fail(sprintf(
+        diamon_test_fail(sprintf(
             '%s (expected %s, got %s)',
             $message,
             var_export($expected, true),
@@ -76,19 +76,19 @@ function assert_equals($expected, $actual, $message)
 
 function assert_contains($needle, $haystack, $message)
 {
-    $GLOBALS['wallos_test_assertions']++;
+    $GLOBALS['diamon_test_assertions']++;
 
     if (strpos((string) $haystack, (string) $needle) === false) {
-        wallos_test_fail($message . ' (missing: ' . $needle . ')');
+        diamon_test_fail($message . ' (missing: ' . $needle . ')');
     }
 }
 
 function assert_not_contains($needle, $haystack, $message)
 {
-    $GLOBALS['wallos_test_assertions']++;
+    $GLOBALS['diamon_test_assertions']++;
 
     if (strpos((string) $haystack, (string) $needle) !== false) {
-        wallos_test_fail($message . ' (unexpectedly present: ' . $needle . ')');
+        diamon_test_fail($message . ' (unexpectedly present: ' . $needle . ')');
     }
 }
 
@@ -103,12 +103,12 @@ function assert_not_contains($needle, $haystack, $message)
  *
  * @return string Path to the freshly copied database.
  */
-function wallos_test_database()
+function diamon_test_database()
 {
     static $template = null;
 
     if ($template === null) {
-        $sandbox = WALLOS_TEST_TMP . '/sandbox';
+        $sandbox = DIAMON_TEST_TMP . '/sandbox';
 
         if (!is_dir($sandbox)) {
             mkdir($sandbox, 0700, true);
@@ -116,12 +116,12 @@ function wallos_test_database()
                 mkdir($sandbox . '/' . $directory, 0700, true);
             }
 
-            foreach (glob(WALLOS_ROOT . '/migrations/*.php') as $migration) {
+            foreach (glob(DIAMON_ROOT . '/migrations/*.php') as $migration) {
                 copy($migration, $sandbox . '/migrations/' . basename($migration));
             }
-            copy(WALLOS_ROOT . '/endpoints/cronjobs/createdatabase.php', $sandbox . '/endpoints/cronjobs/createdatabase.php');
-            copy(WALLOS_ROOT . '/includes/run_migrations.php', $sandbox . '/includes/run_migrations.php');
-            // Migrations 000062 and 000063 load these files from the sandbox.
+            copy(DIAMON_ROOT . '/endpoints/cronjobs/createdatabase.php', $sandbox . '/endpoints/cronjobs/createdatabase.php');
+            copy(DIAMON_ROOT . '/includes/run_migrations.php', $sandbox . '/includes/run_migrations.php');
+            // Migrations 000062, 000063 and 000069 load these files from the sandbox.
             // PHP treats that path as a different file from the application
             // copy, so the sandbox file loads the real one only when the
             // functions are not already declared.
@@ -129,11 +129,12 @@ function wallos_test_database()
                 'provider_catalog.php' => 'get_provider_catalog',
                 'subscription_logo.php' => 'resolve_provider_catalog_id_for_subscription',
                 'logo_theme_variant.php' => 'classifyLogoTextColor',
-                'ssrf_helper.php' => 'wallos_ip_is_private_or_reserved',
+                'ssrf_helper.php' => 'diamon_ip_is_private_or_reserved',
+                'logo_cleanup.php' => 'deleteLogoFileIfUnused',
             ] as $include => $function) {
                 file_put_contents(
                     $sandbox . '/includes/' . $include,
-                    "<?php\nif (!function_exists(" . var_export($function, true) . ")) {\n    require_once " . var_export(WALLOS_ROOT . '/includes/' . $include, true) . ";\n}\n"
+                    "<?php\nif (!function_exists(" . var_export($function, true) . ")) {\n    require_once " . var_export(DIAMON_ROOT . '/includes/' . $include, true) . ";\n}\n"
                 );
             }
         }
@@ -155,7 +156,7 @@ function wallos_test_database()
         $template = $databaseFile;
     }
 
-    $copy = WALLOS_TEST_TMP . '/case-' . uniqid('', true) . '.db';
+    $copy = DIAMON_TEST_TMP . '/case-' . uniqid('', true) . '.db';
     copy($template, $copy);
 
     return $copy;
@@ -166,9 +167,9 @@ function wallos_test_database()
  *
  * @return SQLite3
  */
-function wallos_test_open_database()
+function diamon_test_open_database()
 {
-    $db = new SQLite3(wallos_test_database());
+    $db = new SQLite3(diamon_test_database());
     $db->busyTimeout(5000);
 
     return $db;
@@ -178,7 +179,7 @@ function wallos_test_open_database()
  * SQLite3 wrapper that counts statements, so tests can assert that a code path
  * does not issue one query per row.
  */
-class WallosCountingDatabase extends SQLite3
+class DiamonCountingDatabase extends SQLite3
 {
     public $queryCount = 0;
 
@@ -210,24 +211,24 @@ class WallosCountingDatabase extends SQLite3
 }
 
 /**
- * @return WallosCountingDatabase
+ * @return DiamonCountingDatabase
  */
-function wallos_test_open_counting_database()
+function diamon_test_open_counting_database()
 {
-    $db = new WallosCountingDatabase(wallos_test_database());
+    $db = new DiamonCountingDatabase(diamon_test_database());
     $db->busyTimeout(5000);
 
     return $db;
 }
 
 /**
- * Inserts a user together with the currency rows Wallos creates alongside it.
+ * Inserts a user together with the currency rows Diamon creates alongside it.
  *
  * @param SQLite3 $db
  * @param int     $id
  * @param string  $username
  */
-function wallos_test_create_user($db, $id, $username)
+function diamon_test_create_user($db, $id, $username)
 {
     $stmt = $db->prepare("INSERT INTO user (id, username, email, password, main_currency) VALUES (:id, :username, :email, 'x', 1)");
     $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
@@ -243,7 +244,7 @@ function wallos_test_create_user($db, $id, $username)
 
     foreach ([['EUR', 'Euro', 1.0], ['USD', 'US Dollar', 1.1]] as $index => $currency) {
         $stmt = $db->prepare('INSERT INTO currencies (id, name, symbol, code, rate, user_id) VALUES (:id, :name, :symbol, :code, :rate, :userId)');
-        $stmt->bindValue(':id', wallos_test_currency_id($id, $index), SQLITE3_INTEGER);
+        $stmt->bindValue(':id', diamon_test_currency_id($id, $index), SQLITE3_INTEGER);
         $stmt->bindValue(':name', $currency[1], SQLITE3_TEXT);
         $stmt->bindValue(':symbol', $currency[0] === 'EUR' ? "\u{20AC}" : '$', SQLITE3_TEXT);
         $stmt->bindValue(':code', $currency[0], SQLITE3_TEXT);
@@ -253,7 +254,7 @@ function wallos_test_create_user($db, $id, $username)
     }
 
     $stmt = $db->prepare('UPDATE user SET main_currency = :currencyId WHERE id = :id');
-    $stmt->bindValue(':currencyId', wallos_test_currency_id($id, 0), SQLITE3_INTEGER);
+    $stmt->bindValue(':currencyId', diamon_test_currency_id($id, 0), SQLITE3_INTEGER);
     $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
     $stmt->execute();
 }
@@ -265,7 +266,7 @@ function wallos_test_create_user($db, $id, $username)
  * @param int $index   0 = EUR (main currency), 1 = USD
  * @return int
  */
-function wallos_test_currency_id($userId, $index)
+function diamon_test_currency_id($userId, $index)
 {
     return 9000 + ($userId * 10) + $index;
 }

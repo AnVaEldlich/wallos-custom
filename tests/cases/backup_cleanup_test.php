@@ -19,8 +19,8 @@
   which this harness has no way to do.
 */
 
-wallos_test('the archive is removed on every path out of the request', function () {
-    $source = file_get_contents(WALLOS_ROOT . '/endpoints/db/backup.php');
+diamon_test('the archive is removed on every path out of the request', function () {
+    $source = file_get_contents(DIAMON_ROOT . '/endpoints/db/backup.php');
 
     assert_contains('register_shutdown_function', $source,
         'the removal is registered rather than written after readfile()');
@@ -35,11 +35,11 @@ wallos_test('the archive is removed on every path out of the request', function 
         'the unlink that only ran on a completed download is gone');
 });
 
-wallos_test('a failure before the stream still removes the archive itself', function () {
+diamon_test('a failure before the stream still removes the archive itself', function () {
     // The branches that give up before streaming keep their own unlink and
     // their own message; the shutdown function is a second answer for the path
     // that has none, not a replacement for the ones that do.
-    $source = file_get_contents(WALLOS_ROOT . '/endpoints/db/backup.php');
+    $source = file_get_contents(DIAMON_ROOT . '/endpoints/db/backup.php');
 
     assert_same(2, substr_count($source, '@unlink($zipname);
     die(json_encode(['),

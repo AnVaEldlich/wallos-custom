@@ -11,17 +11,17 @@ if ($isAdmin != 1) {
 
 // get admin settings from admin table, with anything the deployment owns
 // applied over them
-$adminConfiguration = wallos_get_effective_admin_configuration($db);
+$adminConfiguration = diamon_get_effective_admin_configuration($db);
 $settings = $adminConfiguration['settings'];
 $instanceManagedFields = $adminConfiguration['managed_fields'];
 $instanceNotes = $adminConfiguration['notes'];
 
-$oidcConfiguration = wallos_get_effective_oidc_configuration($db);
+$oidcConfiguration = diamon_get_effective_oidc_configuration($db);
 $oidcSettings = $oidcConfiguration['settings'];
 $oidcManagedFields = $oidcConfiguration['managed_fields'];
 $oidcNotes = $oidcConfiguration['notes'];
 
-$ssrfConfiguration = wallos_get_effective_ssrf_allowlist($db);
+$ssrfConfiguration = diamon_get_effective_ssrf_allowlist($db);
 $ssrfManagedFields = $ssrfConfiguration['is_managed'] ? ['allowlist' => 'SSRF_ALLOWLIST'] : [];
 
 function oidc_input_attrs($field, $managedFields)

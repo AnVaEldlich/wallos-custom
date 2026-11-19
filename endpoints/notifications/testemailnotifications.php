@@ -19,14 +19,14 @@ $data = json_decode($postData, true);
 // unconfigured: the admin page called it managed, the test said it failed,
 // and nothing explained why. Any field that came back empty and is
 // env-managed is filled in from the effective configuration instead.
-$data = wallos_fill_managed_form_fields($data, [
+$data = diamon_fill_managed_form_fields($data, [
     'smtpaddress' => 'smtp_address',
     'smtpport' => 'smtp_port',
     'encryption' => 'encryption',
     'smtpusername' => 'smtp_username',
     'smtppassword' => 'smtp_password',
     'fromemail' => 'from_email',
-], wallos_get_effective_admin_configuration($db)['managed_fields'], wallos_get_admin_settings($db));
+], diamon_get_effective_admin_configuration($db)['managed_fields'], diamon_get_admin_settings($db));
 
 if (
     !isset($data["smtpaddress"]) || $data["smtpaddress"] == "" ||
@@ -67,7 +67,7 @@ if (
     }
     $smtpUsername = $data["smtpusername"];
     $smtpPassword = $data["smtppassword"];
-    $fromEmail = $data["fromemail"] ? $data['fromemail'] : "wallos@wallosapp.com";
+    $fromEmail = $data["fromemail"] ? $data['fromemail'] : "noreply@diamon.localhost";
 
     $mail = new PHPMailer(true);
     $mail->CharSet = "UTF-8";
@@ -95,10 +95,10 @@ if (
     $email = $user['email'];
     $name = $user['username'];
 
-    $mail->setFrom($fromEmail, 'Wallos App');
+    $mail->setFrom($fromEmail, 'Diamon');
     $mail->addAddress($email, $name);
 
-    $mail->Subject = translate('wallos_notification', $i18n);
+    $mail->Subject = translate('diamon_notification', $i18n);
     $mail->Body = translate('test_notification', $i18n);
 
     try {

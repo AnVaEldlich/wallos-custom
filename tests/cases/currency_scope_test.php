@@ -2,7 +2,7 @@
 /*
   Refreshing one user's exchange rates must never touch another user's rows.
 
-  Wallos stores one currency row per user, and each user's rate is derived from
+  Diamon stores one currency row per user, and each user's rate is derived from
   their own main currency. A rate update that matches on the currency code alone
   therefore overwrites other users' rates with a conversion base that is not
   theirs.
@@ -15,8 +15,8 @@
  */
 function currency_scope_fixture($db)
 {
-    wallos_test_create_user($db, 1, 'alice');
-    wallos_test_create_user($db, 2, 'bob');
+    diamon_test_create_user($db, 1, 'alice');
+    diamon_test_create_user($db, 2, 'bob');
 
     // Bob's rates are deliberately distinct so any cross-user write is visible.
     $stmt = $db->prepare('UPDATE currencies SET rate = 2.5 WHERE user_id = 2');
@@ -40,8 +40,8 @@ function currency_scope_rate($db, $userId, $code)
     return $row ? (float) $row['rate'] : 0.0;
 }
 
-wallos_test('rate updates are scoped to one user', function () {
-    $db = wallos_test_open_database();
+diamon_test('rate updates are scoped to one user', function () {
+    $db = diamon_test_open_database();
     currency_scope_fixture($db);
 
     $before = currency_scope_rate($db, 2, 'USD');
@@ -59,10 +59,10 @@ wallos_test('rate updates are scoped to one user', function () {
     $db->close();
 });
 
-wallos_test('an unscoped rate update would corrupt other users', function () {
+diamon_test('an unscoped rate update would corrupt other users', function () {
     // Guards the regression itself: if this ever stops being true, the scoped
     // statement above has lost its purpose.
-    $db = wallos_test_open_database();
+    $db = diamon_test_open_database();
     currency_scope_fixture($db);
 
     $stmt = $db->prepare('UPDATE currencies SET rate = :rate WHERE code = :code');
@@ -75,7 +75,7 @@ wallos_test('an unscoped rate update would corrupt other users', function () {
     $db->close();
 });
 
-wallos_test('every currency rate update in the code base is user scoped', function () {
+diamon_test('every currency rate update in the code base is user scoped', function () {
     // The regression guard: any future rate write that forgets the user filter
     // fails here rather than silently corrupting other accounts in production.
     $paths = [
@@ -84,7 +84,7 @@ wallos_test('every currency rate update in the code base is user scoped', functi
     ];
 
     foreach ($paths as $path) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $path);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $path);
 
         preg_match_all('/UPDATE\s+currencies\s+SET\s+rate[^"\']*/i', $source, $matches);
         assert_true($matches[0] !== [], $path . ' still contains a rate update');

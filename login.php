@@ -87,7 +87,7 @@ if ($adminRow['login_disabled'] == 1) {
         ]);
 
         $cookieValue = $username . "|" . "abc123ABC" . "|" . $main_currency;
-        setcookie('wallos_login', $cookieValue, [
+        setcookie('diamon_login', $cookieValue, [
             'expires' => $cookieExpire,
             'samesite' => 'Lax',
             'httponly' => true,
@@ -123,7 +123,7 @@ if (isset($_COOKIE['colorTheme'])) {
 // Check if OIDC is enabled and resolve any environment overrides.
 $password_login_disabled = false;
 $oidcEnabled = false;
-$oidcConfiguration = wallos_get_effective_oidc_configuration($db);
+$oidcConfiguration = diamon_get_effective_oidc_configuration($db);
 $oidcEnabled = $oidcConfiguration['enabled'] == 1 && $oidcConfiguration['is_configured'];
 if ($oidcEnabled) {
     $oidcSettings = $oidcConfiguration['settings'];
@@ -219,7 +219,7 @@ if (isset($_POST['username']) && isset($_POST['password']) && $password_login_di
                     $addLoginTokensStmt->execute();
                     $_SESSION['token'] = $token;
                     $cookieValue = $username . "|" . $token . "|" . $main_currency;
-                    setcookie('wallos_login', $cookieValue, [
+                    setcookie('diamon_login', $cookieValue, [
                         'expires' => $cookieExpire,
                         'samesite' => 'Lax',
                         'httponly' => true,
@@ -274,7 +274,7 @@ if (!$password_login_disabled) {
     // owns offers the password reset link. Configured and invisible would be
     // the worst of the three possible outcomes.
     require_once 'includes/instance_config.php';
-    $adminRow = wallos_get_admin_settings($db);
+    $adminRow = diamon_get_admin_settings($db);
     $registrationsOpen = $adminRow['registrations_open'];
     $maxUsers = $adminRow['max_users'];
 
@@ -312,9 +312,10 @@ if (isset($_GET['error'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="<?= $theme == "light" ? "#FFFFFF" : "#12151C" ?>" id="theme-color" />
-    <meta name="apple-mobile-web-app-title" content="Wallos">
-    <title>Wallos - Subscription Tracker</title>
-    <link rel="icon" type="image/png" href="images/icon/favicon.ico" sizes="16x16">
+    <meta name="apple-mobile-web-app-title" content="Diamon">
+    <title>Diamon - Subscription Tracker</title>
+    <link rel="icon" href="images/icon/favicon.ico" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="images/icon/favicon.svg">
     <link rel="apple-touch-icon" href="images/icon/apple-touch-icon.png">
     <link rel="apple-touch-icon" sizes="152x152" href="images/icon/apple-touch-icon-152.png">
     <link rel="apple-touch-icon" sizes="180x180" href="images/icon/apple-touch-icon-180.png">
@@ -351,11 +352,11 @@ if (isset($_GET['error'])) {
                 <h1><?= translate('auth_tagline', $i18n) ?></h1>
                 <p><?= translate('auth_tagline_sub', $i18n) ?></p>
             </div>
-            <div class="auth-brand-footer">Wallos &mdash; Subscription Tracker</div>
+            <div class="auth-brand-footer">Diamon &mdash; Subscription Tracker</div>
         </aside>
         <section class="container">
             <header>
-                <div class="logo-image" title="Wallos - Subscription Tracker">
+                <div class="logo-image" title="Diamon - Subscription Tracker">
                     <?php include "images/siteicons/svg/logo.php"; ?>
                 </div>
                 <p>

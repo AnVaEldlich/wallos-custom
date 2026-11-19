@@ -83,11 +83,12 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Wallos - Subscription Tracker</title>
-  <meta name="apple-mobile-web-app-title" content="Wallos">
+  <title>Diamon - Subscription Tracker</title>
+  <meta name="apple-mobile-web-app-title" content="Diamon">
   <meta name="theme-color" content="<?= $theme == "light" ? "#FFFFFF" : "#12151C" ?>" id="theme-color" />
   <meta name="referrer" content="no-referrer">
-  <link rel="icon" type="image/png" href="images/icon/favicon.ico" sizes="16x16">
+  <link rel="icon" href="images/icon/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="images/icon/favicon.svg">
   <link rel="apple-touch-icon" href="images/icon/apple-touch-icon.png">
   <link rel="apple-touch-icon" sizes="152x152" href="images/icon/apple-touch-icon-152.png">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icon/apple-touch-icon-180.png">
@@ -105,6 +106,7 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
   <script type="text/javascript" src="scripts/all.js?<?= $version ?>"></script>
   <script type="text/javascript" src="scripts/common.js?<?= $version ?>"></script>
   <script type="text/javascript" src="scripts/header-theme.js?<?= $version ?>"></script>
+  <script type="text/javascript" src="scripts/header-notifications.js?<?= $version ?>-<?= (int) @filemtime(__DIR__ . '/../scripts/header-notifications.js') ?>"></script>
   <script type="text/javascript">
     window.theme = <?= json_encode($theme, JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_APOS) ?>;
     window.update_theme_settings = "<?= $updateThemeSettings ?>";
@@ -112,6 +114,26 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
     window.colorTheme = <?= json_encode($colorTheme, JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_APOS) ?>;
     window.mobileNavigation = "<?= $settings['mobileNavigation'] == "true" ?>";
     window.csrfToken = "<?= htmlspecialchars(generate_csrf_token()) ?>";
+    window.inAppNotificationStrings = <?= json_encode([
+      'title' => translate('notifications', $i18n),
+      'empty' => translate('in_app_notifications_empty', $i18n),
+      'unused_title' => translate('in_app_notifications_unused_title', $i18n),
+      'unused_body' => translate('in_app_notifications_unused_body', $i18n),
+      'unused_body_today' => translate('in_app_notifications_unused_body_today', $i18n),
+      'review' => translate('in_app_notifications_review', $i18n),
+      'cancel_hint' => translate('in_app_notifications_cancel_hint', $i18n),
+      'cancelSubscription' => translate('cancel_subscription', $i18n),
+      'keepSubscription' => translate('keep_subscription', $i18n),
+      'cancelOutcomeTitle' => translate('cancel_outcome_title', $i18n),
+      'cancelOutcomeDetectable' => translate('cancel_outcome_detectable', $i18n),
+      'cancelOutcomeManual' => translate('cancel_outcome_manual', $i18n),
+      'cancelOutcomeNoUrl' => translate('cancel_outcome_no_url', $i18n),
+      'cancelOutcomeWaiting' => translate('cancel_outcome_waiting', $i18n),
+      'cancelOutcomeCancelled' => translate('cancel_outcome_cancelled', $i18n),
+      'cancelOutcomeNotCancelled' => translate('cancel_outcome_not_cancelled', $i18n),
+      'cancelOutcomeReopen' => translate('cancel_outcome_reopen', $i18n),
+      'cancelDetected' => translate('cancel_detected_message', $i18n),
+    ], JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_APOS) ?>;
   </script>
   <style>
     <?= htmlspecialchars($customCss, ENT_QUOTES, 'UTF-8') ?>
@@ -168,7 +190,7 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
     <div class="contain">
       <div class="logo">
         <a href=".">
-          <div class="logo-image" title="Wallos - Subscription Tracker">
+          <div class="logo-image" title="Diamon - Subscription Tracker">
             <?php include "images/siteicons/svg/logo.php"; ?>
           </div>
         </a>
@@ -178,6 +200,24 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
           title="<?= translate('theme', $i18n) ?>" aria-label="<?= translate('theme', $i18n) ?>">
           <i class="fa-solid <?= $theme == "dark" ? "fa-sun" : "fa-moon" ?>"></i>
         </button>
+        <div class="header-notifications" id="header-notifications">
+          <button type="button" class="header-theme-toggle header-notifications-toggle" id="header-notifications-toggle"
+            title="<?= htmlspecialchars(translate('notifications', $i18n), ENT_QUOTES, 'UTF-8') ?>"
+            aria-label="<?= htmlspecialchars(translate('notifications', $i18n), ENT_QUOTES, 'UTF-8') ?>"
+            aria-expanded="false" aria-controls="header-notifications-panel">
+            <i class="fa-solid fa-bell" aria-hidden="true"></i>
+            <span class="header-notifications-badge hide" id="header-notifications-badge" aria-hidden="true">0</span>
+          </button>
+          <div class="header-notifications-panel hide" id="header-notifications-panel" role="dialog"
+            aria-label="<?= htmlspecialchars(translate('notifications', $i18n), ENT_QUOTES, 'UTF-8') ?>">
+            <div class="header-notifications-header">
+              <strong><?= htmlspecialchars(translate('notifications', $i18n), ENT_QUOTES, 'UTF-8') ?></strong>
+            </div>
+            <div class="header-notifications-list" id="header-notifications-list">
+              <p class="header-notifications-empty"><?= htmlspecialchars(translate('in_app_notifications_empty', $i18n), ENT_QUOTES, 'UTF-8') ?></p>
+            </div>
+          </div>
+        </div>
         <div class="dropdown">
           <button class="dropbtn" onClick="toggleDropdown()">
             <img src="<?= htmlspecialchars($userData['avatar'], ENT_QUOTES, 'UTF-8') ?>" alt="me" id="avatar">

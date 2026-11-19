@@ -9,6 +9,7 @@ include_once 'includes/list_subscriptions.php';
 require_once 'includes/subscription_payers.php';
 require_once 'includes/subscription_categories.php';
 require_once 'includes/usage_sessions.php';
+require_once 'includes/subscription_value_score.php';
 
 $providerCatalog = get_provider_catalog();
 
@@ -274,9 +275,6 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
 
     $print = [];
     foreach ($subscriptions as $subscription) {
-      if ($subscription['inactive'] == 1 && isset($settings['hideDisabledSubscriptions']) && $settings['hideDisabledSubscriptions'] === 'true') {
-        continue;
-      }
       $id = $subscription['id'];
       $print[$id]['id'] = $id;
       $print[$id]['logo'] = $subscription['logo'] != "" ? "images/uploads/logos/" . $subscription['logo'] : "";
@@ -288,12 +286,15 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $frequency = $subscription['frequency'];
       $print[$id]['billing_cycle'] = getBillingCycle($cycle, $frequency, $i18n);
       $print[$id]['one_time'] = ($cycle == 5);
+      $print[$id]['cycle'] = $cycle;
+      $print[$id]['frequency'] = $frequency;
       $paymentMethodId = $subscription['payment_method_id'];
       $currencyId = $subscription['currency_id'];
       $print[$id]['auto_renew'] = $subscription['auto_renew'];
       $next_payment_timestamp = strtotime($subscription['next_payment']);
       $formatted_date = $formatter->format($next_payment_timestamp);
       $print[$id]['next_payment'] = $formatted_date;
+      $print[$id]['next_payment_iso'] = date('Y-m-d', $next_payment_timestamp);
       $paymentIcon = $payment_methods[$paymentMethodId ?? ""]['icon'] ?? "";
       $paymentIconFolder = (strpos($paymentIcon, 'images/uploads/icons/') !== false) ? "" : "images/uploads/logos/";
       $print[$id]['payment_method_icon'] = $paymentIcon === "" ? "" : $paymentIconFolder . $paymentIcon;
@@ -304,9 +305,11 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $print[$id]['payer_user_id'] = $subscription['payer_user_id'];
       $print[$id]['payer_user_ids'] = $payersBySubscription[$id] ?? [];
       applyDisplayedSubscriptionPrice($print[$id], $subscription['price'], $currencyId, $mainCurrencyId, $settings, $currencies, $db);
+      $print[$id]['score_monthly_price'] = getPricePerMonth($cycle, $frequency, $print[$id]['price']);
       $print[$id]['sort_price'] = getSortPrice($subscription['price'], $subscription['currency_id'], $mainCurrencyId, $cycle, $frequency, $settings, $db);
       $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment']);
       $print[$id]['inactive'] = $subscription['inactive'];
+      $print[$id]['cancellation_date'] = $subscription['cancellation_date'] ?? null;
       $print[$id]['url'] = $subscription['url'];
       $print[$id]['notes'] = $subscription['notes'];
       $print[$id]['replacement_subscription_id'] = $subscription['replacement_subscription_id'];
@@ -326,9 +329,11 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $usageSummary = $usageSummaries[$usageRow['id']] ?? usage_empty_summary($usageAsOf);
       $print[$usageId]['usage_label'] = usage_format_duration($usageSummary['total']);
       $print[$usageId]['usage_seconds'] = $usageSummary['total'];
+      $print[$usageId]['usage_last_used'] = $usageSummary['last_used'];
       $print[$usageId]['usage_live'] = $usageSummary['live'];
       $print[$usageId]['usage_as_of'] = $usageSummary['as_of'];
     }
+    attach_subscription_value_bands($db, $userId, $print);
 
     if ($sortOrder == "alphanumeric") {
       usort($print, function ($a, $b) {

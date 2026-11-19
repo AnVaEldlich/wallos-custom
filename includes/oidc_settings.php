@@ -1,6 +1,6 @@
 <?php
 
-function wallos_get_oidc_defaults()
+function diamon_get_oidc_defaults()
 {
     return [
         'name' => '',
@@ -20,7 +20,7 @@ function wallos_get_oidc_defaults()
     ];
 }
 
-function wallos_get_oidc_env_value($name)
+function diamon_get_oidc_env_value($name)
 {
     $value = getenv($name);
     if ($value !== false) {
@@ -38,12 +38,12 @@ function wallos_get_oidc_env_value($name)
     return null;
 }
 
-function wallos_has_oidc_env_value($name)
+function diamon_has_oidc_env_value($name)
 {
-    return wallos_get_oidc_env_value($name) !== null;
+    return diamon_get_oidc_env_value($name) !== null;
 }
 
-function wallos_parse_oidc_boolean($value)
+function diamon_parse_oidc_boolean($value)
 {
     if (is_bool($value)) {
         return $value ? 1 : 0;
@@ -61,9 +61,9 @@ function wallos_parse_oidc_boolean($value)
     return null;
 }
 
-function wallos_get_db_oidc_settings($db)
+function diamon_get_db_oidc_settings($db)
 {
-    $settings = wallos_get_oidc_defaults();
+    $settings = diamon_get_oidc_defaults();
 
     $stmt = $db->prepare('SELECT * FROM oauth_settings WHERE id = 1');
     $result = $stmt->execute();
@@ -80,7 +80,7 @@ function wallos_get_db_oidc_settings($db)
     return $settings;
 }
 
-function wallos_get_db_oidc_enabled($db)
+function diamon_get_db_oidc_enabled($db)
 {
     $stmt = $db->prepare('SELECT oidc_oauth_enabled FROM admin WHERE id = 1');
     $result = $stmt->execute();
@@ -89,7 +89,7 @@ function wallos_get_db_oidc_enabled($db)
     return $row ? (int) $row['oidc_oauth_enabled'] : 0;
 }
 
-function wallos_fetch_oidc_discovery_document($issuer)
+function diamon_fetch_oidc_discovery_document($issuer)
 {
     $issuer = rtrim(trim((string) $issuer), '/');
     if ($issuer === '') {
@@ -122,16 +122,16 @@ function wallos_fetch_oidc_discovery_document($issuer)
     return [$document, null];
 }
 
-function wallos_get_effective_oidc_configuration($db)
+function diamon_get_effective_oidc_configuration($db)
 {
-    $settings = wallos_get_db_oidc_settings($db);
+    $settings = diamon_get_db_oidc_settings($db);
     $managedFields = [];
     $notes = [];
     $discoveryDocument = null;
 
-    $enabled = wallos_get_db_oidc_enabled($db);
-    if (wallos_has_oidc_env_value('OIDC_ENABLED')) {
-        $parsedEnabled = wallos_parse_oidc_boolean(wallos_get_oidc_env_value('OIDC_ENABLED'));
+    $enabled = diamon_get_db_oidc_enabled($db);
+    if (diamon_has_oidc_env_value('OIDC_ENABLED')) {
+        $parsedEnabled = diamon_parse_oidc_boolean(diamon_get_oidc_env_value('OIDC_ENABLED'));
         if ($parsedEnabled !== null) {
             $enabled = $parsedEnabled;
             $managedFields['enabled'] = 'OIDC_ENABLED';
@@ -140,10 +140,10 @@ function wallos_get_effective_oidc_configuration($db)
         }
     }
 
-    if (wallos_has_oidc_env_value('OIDC_CLIENT_SECRET_FILE')) {
+    if (diamon_has_oidc_env_value('OIDC_CLIENT_SECRET_FILE')) {
         $managedFields['client_secret'] = 'OIDC_CLIENT_SECRET_FILE';
         $settings['client_secret'] = '';
-        $secretFile = trim((string) wallos_get_oidc_env_value('OIDC_CLIENT_SECRET_FILE'));
+        $secretFile = trim((string) diamon_get_oidc_env_value('OIDC_CLIENT_SECRET_FILE'));
 
         if ($secretFile === '') {
             $notes[] = 'OIDC_CLIENT_SECRET_FILE is empty.';
@@ -152,13 +152,13 @@ function wallos_get_effective_oidc_configuration($db)
         } else {
             $notes[] = 'OIDC client secret file is not readable: ' . $secretFile;
         }
-    } elseif (wallos_has_oidc_env_value('OIDC_CLIENT_SECRET')) {
-        $settings['client_secret'] = (string) wallos_get_oidc_env_value('OIDC_CLIENT_SECRET');
+    } elseif (diamon_has_oidc_env_value('OIDC_CLIENT_SECRET')) {
+        $settings['client_secret'] = (string) diamon_get_oidc_env_value('OIDC_CLIENT_SECRET');
         $managedFields['client_secret'] = 'OIDC_CLIENT_SECRET';
     }
 
-    if (wallos_has_oidc_env_value('OIDC_AUTO_CREATE_USER')) {
-        $parsedValue = wallos_parse_oidc_boolean(wallos_get_oidc_env_value('OIDC_AUTO_CREATE_USER'));
+    if (diamon_has_oidc_env_value('OIDC_AUTO_CREATE_USER')) {
+        $parsedValue = diamon_parse_oidc_boolean(diamon_get_oidc_env_value('OIDC_AUTO_CREATE_USER'));
         if ($parsedValue !== null) {
             $settings['auto_create_user'] = $parsedValue;
             $managedFields['auto_create_user'] = 'OIDC_AUTO_CREATE_USER';
@@ -167,8 +167,8 @@ function wallos_get_effective_oidc_configuration($db)
         }
     }
 
-    if (wallos_has_oidc_env_value('OIDC_DISABLE_PASSWORD_LOGIN')) {
-        $parsedValue = wallos_parse_oidc_boolean(wallos_get_oidc_env_value('OIDC_DISABLE_PASSWORD_LOGIN'));
+    if (diamon_has_oidc_env_value('OIDC_DISABLE_PASSWORD_LOGIN')) {
+        $parsedValue = diamon_parse_oidc_boolean(diamon_get_oidc_env_value('OIDC_DISABLE_PASSWORD_LOGIN'));
         if ($parsedValue !== null) {
             $settings['password_login_disabled'] = $parsedValue;
             $managedFields['password_login_disabled'] = 'OIDC_DISABLE_PASSWORD_LOGIN';
@@ -177,8 +177,8 @@ function wallos_get_effective_oidc_configuration($db)
         }
     }
 
-    if (wallos_has_oidc_env_value('OIDC_REQUIRE_EMAIL_VERIFIED')) {
-        $parsedValue = wallos_parse_oidc_boolean(wallos_get_oidc_env_value('OIDC_REQUIRE_EMAIL_VERIFIED'));
+    if (diamon_has_oidc_env_value('OIDC_REQUIRE_EMAIL_VERIFIED')) {
+        $parsedValue = diamon_parse_oidc_boolean(diamon_get_oidc_env_value('OIDC_REQUIRE_EMAIL_VERIFIED'));
         if ($parsedValue !== null) {
             $settings['require_email_verified'] = $parsedValue;
             $managedFields['require_email_verified'] = 'OIDC_REQUIRE_EMAIL_VERIFIED';
@@ -187,8 +187,8 @@ function wallos_get_effective_oidc_configuration($db)
         }
     }
 
-    if (wallos_has_oidc_env_value('OIDC_ISSUER')) {
-        $issuer = (string) wallos_get_oidc_env_value('OIDC_ISSUER');
+    if (diamon_has_oidc_env_value('OIDC_ISSUER')) {
+        $issuer = (string) diamon_get_oidc_env_value('OIDC_ISSUER');
         $managedFields['issuer'] = 'OIDC_ISSUER';
 
         foreach (['authorization_url', 'token_url', 'user_info_url'] as $field) {
@@ -197,7 +197,7 @@ function wallos_get_effective_oidc_configuration($db)
         }
 
         if (trim($issuer) !== '') {
-            [$discoveryDocument, $discoveryError] = wallos_fetch_oidc_discovery_document($issuer);
+            [$discoveryDocument, $discoveryError] = diamon_fetch_oidc_discovery_document($issuer);
             if ($discoveryError !== null) {
                 $notes[] = $discoveryError;
             } elseif ($discoveryDocument !== null) {
@@ -231,8 +231,8 @@ function wallos_get_effective_oidc_configuration($db)
     ];
 
     foreach ($envFieldMap as $field => $envVar) {
-        if (wallos_has_oidc_env_value($envVar)) {
-            $settings[$field] = (string) wallos_get_oidc_env_value($envVar);
+        if (diamon_has_oidc_env_value($envVar)) {
+            $settings[$field] = (string) diamon_get_oidc_env_value($envVar);
             $managedFields[$field] = $envVar;
         }
     }
