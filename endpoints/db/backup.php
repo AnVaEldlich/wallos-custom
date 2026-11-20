@@ -38,7 +38,7 @@ function addFolderToZip($dir, $zipArchive, $zipdir = '')
 // download the full database unauthenticated. The backup is now streamed
 // directly to the authenticated admin below and never persists in a
 // web-accessible location.
-$zipname = tempnam(sys_get_temp_dir(), 'wallos_backup_');
+$zipname = tempnam(sys_get_temp_dir(), 'diamon_backup_');
 if ($zipname === false) {
     die(json_encode([
         "success" => false,
@@ -76,7 +76,7 @@ while (ob_get_level() > 0) {
 // 0 bytes, so clear the stat cache before reading its size for Content-Length.
 clearstatcache(true, $zipname);
 
-$downloadName = 'Wallos-Backup-' . date('Ymd-His') . '.zip';
+$downloadName = 'Diamon-Backup-' . date('Ymd-His') . '.zip';
 header('Content-Type: application/zip');
 header('Content-Disposition: attachment; filename="' . $downloadName . '"');
 header('Content-Length: ' . filesize($zipname));

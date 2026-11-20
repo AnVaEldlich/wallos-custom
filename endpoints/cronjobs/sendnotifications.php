@@ -135,7 +135,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
         $email['encryption'] = $row["encryption"];
         $email['smtpUsername'] = $row["smtp_username"];
         $email['smtpPassword'] = $row["smtp_password"];
-        $email['fromEmail'] = $row["from_email"] ? $row["from_email"] : "wallos@wallosapp.com";
+        $email['fromEmail'] = $row["from_email"] ? $row["from_email"] : "noreply@diamon.localhost";
         $email['otherEmails'] = $row["other_emails"];
     }
 
@@ -494,7 +494,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                     $emailaddress = !empty($user['email']) ? $user['email'] : $defaultEmail;
                     $name = !empty($user['name']) ? $user['name'] : $defaultName;
 
-                    $mail->setFrom($email['fromEmail'], 'Wallos App');
+                    $mail->setFrom($email['fromEmail'], 'Diamon');
                     $mail->addAddress($emailaddress, $name);
 
                     if (!empty($email['otherEmails'])) {
@@ -511,7 +511,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                         }
                     }
 
-                    $mail->Subject = 'Wallos Notification';
+                    $mail->Subject = 'Diamon Notification';
                     $mail->Body = $message;
 
                     if ($mail->send()) {
@@ -537,7 +537,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                         $result = $stmt->execute();
                         $user = $result->fetchArray(SQLITE3_ASSOC);
 
-                        $title = translate('wallos_notification', $i18n);
+                        $title = translate('diamon_notification', $i18n);
 
                         $name = $user['name'] ?? "";
                         $message = buildNotificationMessage($name, $perUser, $periodSummaryLine, $sendPeriodStartSummaryOnly);
@@ -717,7 +717,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                     // Prepare PushPlus Data
                     $data = array(
                         'token' => $pushplus['token'],
-                        'title' => '订阅续期提醒 - Wallos',
+                        'title' => '订阅续期提醒 - Diamon',
                         'content' => mb_convert_encoding($messageContent, 'UTF-8', 'auto'),
                         'template' => 'json'
                     );
@@ -1003,7 +1003,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                     $result = $stmt->execute();
                     $user = $result->fetchArray(SQLITE3_ASSOC);
 
-                    $title = 'Wallos Notification';
+                    $title = 'Diamon Notification';
                     $name = $user['name'] ?? "";
                     $message = buildNotificationMessage($name, $perUser, $periodSummaryLine, $sendPeriodStartSummaryOnly);
                     if ($message === "") {
@@ -1054,7 +1054,10 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                 if ($vapidKeys === false) {
                     echo "Push Notifications not sent: could not load this installation's VAPID keys.<br />";
                 } else {
-                    $adminSettings = wallos_get_admin_settings($db);
+                    $adminSettings = diamon_get_admin_settings($db);
+                    // The fallback VAPID subject keeps the upstream Wallos contact: push
+                    // services (Apple's in particular) reject reserved domains such as
+                    // .localhost, and this value is never shown to anyone.
                     $pushSubject = !empty($adminSettings['from_email'])
                         ? 'mailto:' . $adminSettings['from_email']
                         : 'mailto:wallos@wallosapp.com';
@@ -1074,7 +1077,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                         }
 
                         $payload = json_encode([
-                            'title' => 'Wallos Notification',
+                            'title' => 'Diamon Notification',
                             'body' => $message,
                         ]);
 

@@ -21,8 +21,8 @@ Example response:
     "authorization_url": "https://auth.bellamylab.com/application/o/authorize/",
     "token_url": "https://auth.bellamylab.com/application/o/token/",
     "user_info_url": "https://auth.bellamylab.com/application/o/userinfo/",
-    "redirect_url": "http://localhost:80/wallos",
-    "logout_url": "https://auth.bellamylab.com/application/o/wallos/end-session/",
+    "redirect_url": "http://localhost:80/diamon",
+    "logout_url": "https://auth.bellamylab.com/application/o/diamon/end-session/",
     "user_identifier_field": "sub",
     "scopes": "openid email profile",
     "auth_style": "auto",
@@ -83,7 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" || $_SERVER["REQUEST_METHOD"] === "GET
         exit;
     }
 
-    $oidcConfiguration = wallos_get_effective_oidc_configuration($db);
+    $oidcConfiguration = diamon_get_effective_oidc_configuration($db);
     $oidc_settings = $oidcConfiguration['settings'];
 
     $response = [

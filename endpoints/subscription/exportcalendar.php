@@ -34,6 +34,8 @@ if ($subscription) {
     $subscription['price'] = number_format($subscription['price'], 2);
 
     // Create ICS from subscription information
+    // The UID keeps its pre-rename (Wallos) form so calendars that already
+    // imported these events update them instead of adding duplicates.
     $uid = 'wallos-subscription-' . $subscription['id'] . '@wallos';
     $summary = icalEscape(html_entity_decode($subscription['name'], ENT_QUOTES, 'UTF-8'));
     $notes = icalEscape($subscription['notes']);

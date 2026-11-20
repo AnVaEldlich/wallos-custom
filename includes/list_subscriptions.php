@@ -2,6 +2,8 @@
 
 require_once 'i18n/getlang.php';
 require_once __DIR__ . '/currency_rates.php';
+require_once __DIR__ . '/subscription_logo.php';
+require_once __DIR__ . '/subscription_usage_alerts.php';
 
 function getBillingCycle($cycle, $frequency, $i18n)
 {
@@ -85,7 +87,33 @@ function getPricePerMonth($cycle, $frequency, $price)
 
 function getPriceConverted($price, $currency, $database)
 {
-    return wallos_convert_price($price, $currency, $database);
+    return diamon_convert_price($price, $currency, $database);
+}
+
+/**
+ * The price and currency code a card shows.
+ *
+ * A display currency chosen in Settings converts every card into that
+ * currency and leaves the amount stored on the subscription alone. With no
+ * display currency, the older "convert to my main currency" switch still
+ * applies.
+ */
+function applyDisplayedSubscriptionPrice(&$printRow, $rawPrice, $currencyId, $mainCurrencyId, $settings, $currencies, $database)
+{
+    $price = floatval($rawPrice);
+    $code = $currencies[$currencyId]['code'] ?? '';
+    $displayCurrencyId = (int) ($settings['display_currency_id'] ?? 0);
+
+    if ($displayCurrencyId > 0 && isset($currencies[$displayCurrencyId]) && $displayCurrencyId !== (int) $currencyId) {
+        $price = diamon_convert_between($price, (int) $currencyId, $displayCurrencyId, $database);
+        $code = $currencies[$displayCurrencyId]['code'];
+    } elseif (isset($settings['convertCurrency']) && $settings['convertCurrency'] === 'true' && (int) $currencyId !== (int) $mainCurrencyId) {
+        $price = getPriceConverted($price, $currencyId, $database);
+        $code = $currencies[$mainCurrencyId]['code'] ?? $code;
+    }
+
+    $printRow['price'] = $price;
+    $printRow['currency_code'] = $code;
 }
 
 /**
@@ -184,8 +212,30 @@ function formatDate($date, $lang = 'en')
     return $formattedDate;
 }
 
-function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n, $colorTheme, $imagePath, $disabledToBottom, $mobileNavigation, $showSubscriptionProgress, $currencies, $lang)
+function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n, $colorTheme, $imagePath, $disabledToBottom, $mobileNavigation, $showSubscriptionProgress, $currencies, $lang, $groupCancelled = true)
 {
+    if ($groupCancelled) {
+        $active = [];
+        $cancelled = [];
+        foreach ($subscriptions as $subscription) {
+            if (!empty($subscription['inactive'])) {
+                $cancelled[] = $subscription;
+            } else {
+                $active[] = $subscription;
+            }
+        }
+        printSubscriptions($active, $sort, $categories, $members, $i18n, $colorTheme, $imagePath, $disabledToBottom, $mobileNavigation, $showSubscriptionProgress, $currencies, $lang, false);
+        if ($cancelled !== []) {
+            ?>
+            <div class="subscription-list-title" id="cancelled-subscriptions">
+                <?= translate('cancelled_subscriptions', $i18n) ?>
+            </div>
+            <?php
+            printSubscriptions($cancelled, $sort, $categories, $members, $i18n, $colorTheme, $imagePath, $disabledToBottom, $mobileNavigation, $showSubscriptionProgress, $currencies, $lang, false);
+        }
+        return;
+    }
+
     if ($sort === "price") {
         // Ranked by the main-currency value (sort_price), not the raw number (#861).
         sortSubscriptionsByPrice($subscriptions, $disabledToBottom === 'true');
@@ -277,11 +327,11 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
             if ($subscription['auto_renew'] != 1) {
                 $subscriptionExtraClasses .= " manual";
             }
-
-            $hasLogo = false;
-            if ($subscription['logo'] != "") {
-                $hasLogo = true;
+            if (subscription_is_unused_and_ending($subscription)) {
+                $subscriptionExtraClasses .= " unused-ending";
             }
+
+            $hasLogo = subscription_row_has_display_logo($subscription);
 
             ?>
 
@@ -291,16 +341,11 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
             </label>
             <div class="subscription<?= $subscriptionExtraClasses ?>"
                 onClick="showSubscriptionDetails(event, <?= $subscription['id'] ?>)" data-id="<?= $subscription['id'] ?>"
-                data-name="<?= $subscription['name'] ?>">
+                data-name="<?= $subscription['name'] ?>"
+                <?= str_contains($subscriptionExtraClasses, 'unused-ending') ? 'title="' . htmlspecialchars(translate('usage_unused_ending', $i18n), ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
                 <div class="subscription-main">
                     <span class="logo <?= !$hasLogo ? 'hideOnMobile' : '' ?>">
-                        <?php
-                        if ($hasLogo) {
-                            echo renderThemedLogoImg($subscription['logo'], $subscription['logo_variant'] ?? null, $subscription['logo_text_color'] ?? null);
-                        } else {
-                            include $imagePath . "images/siteicons/svg/logo.php";
-                        }
-                        ?>
+                        <?= render_subscription_card_logo($subscription) ?>
                     </span>
                     <span class="name <?= $hasLogo ? 'hideOnMobile' : '' ?>"><?= $subscription['name'] ?></span>
                     <span class="cycle"
@@ -316,7 +361,18 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
                         ?>
                         <?= $subscription['billing_cycle'] ?>
                     </span>
-                    <span class="next"><?= formatDate($subscription['next_payment'], $lang) ?></span>
+                    <span class="next"><?= formatDate($subscription['next_payment'], $lang) ?>
+                        <?php
+                        // A cancelled subscription the user can still use until
+                        // the end of the paid period (set by assisted cancellation).
+                        $accessUntil = (string) ($subscription['cancellation_date'] ?? '');
+                        if (!empty($subscription['inactive']) && $accessUntil !== '' && $accessUntil >= date('Y-m-d')) {
+                            ?>
+                            <span class="access-until"><?= htmlspecialchars(str_replace('{date}', formatDate($accessUntil, $lang), translate('cancel_access_until', $i18n)), ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php
+                        }
+                        ?>
+                    </span>
                     <span class="price">
                         <span class="value">
                             <?= formatPrice($subscription['price'], $subscription['currency_code'], $currencies) ?>
@@ -329,7 +385,15 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
                             }
                             ?>
                         </span>
-
+                        <span class="usage-time"
+                            data-usage-id="<?= (int) $subscription['id'] ?>"
+                            data-usage-seconds="<?= (int) ($subscription['usage_seconds'] ?? 0) ?>"
+                            data-usage-live="<?= !empty($subscription['usage_live']) ? '1' : '0' ?>"
+                            data-usage-as-of="<?= (int) ($subscription['usage_as_of'] ?? time()) ?>"
+                            data-usage-empty="<?= htmlspecialchars(translate('usage_none', $i18n), ENT_QUOTES, 'UTF-8') ?>"><?= !empty($subscription['usage_label']) ? htmlspecialchars($subscription['usage_label']) : translate('usage_none', $i18n) ?></span>
+                        <?php if (($subscription['value_band'] ?? '') === 'review') { ?>
+                        <span class="value-review"><?= translate('value_review_before_renewal', $i18n) ?></span>
+                        <?php } ?>
                     </span>
                     <span class="payment_method">
                         <?php if (!empty($subscription['payment_method_icon'])) { ?>
@@ -359,6 +423,19 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
                             <i class="fa-solid fa-trash-can"></i>
                             <?= translate('delete', $i18n) ?>
                         </li>
+                        <?php if (!empty($subscription['inactive'])) { ?>
+                        <li class="resume" title="<?= translate('resume_subscription', $i18n) ?>"
+                            onClick="resumeSubscription(event, <?= $subscription['id'] ?>)">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <?= translate('resume_subscription', $i18n) ?>
+                        </li>
+                        <?php } else { ?>
+                        <li class="cancel-subscription" title="<?= translate('cancel_subscription', $i18n) ?>"
+                            onClick="cancelSubscription(event, <?= $subscription['id'] ?>)">
+                            <i class="fa-solid fa-ban"></i>
+                            <?= translate('cancel_subscription', $i18n) ?>
+                        </li>
+                        <?php } ?>
                         <li class="clone" title="<?= translate('clone', $i18n) ?>"
                             onClick="cloneSubscription(event, <?= $subscription['id'] ?>)">
                             <i class="fa-solid fa-copy"></i>
@@ -412,10 +489,24 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
                         <i class="fa-solid fa-trash-can"></i>
                         <?= translate('delete', $i18n) ?>
                     </button>
+                    <?php if (!empty($subscription['inactive'])) { ?>
+                    <button type="button" class="back-action"
+                        onClick="unflipCard(<?= $subscription['id'] ?>); resumeSubscription(event, <?= $subscription['id'] ?>)">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <?= translate('resume_subscription', $i18n) ?>
+                    </button>
+                    <?php } else { ?>
+                    <button type="button" class="back-action"
+                        onClick="unflipCard(<?= $subscription['id'] ?>); cancelSubscription(event, <?= $subscription['id'] ?>)">
+                        <i class="fa-solid fa-ban"></i>
+                        <?= translate('cancel_subscription', $i18n) ?>
+                    </button>
+                    <?php } ?>
                 </div>
             </div>
             <?php
-            if ($showSubscriptionProgress === 'true' && !$subscription['inactive']) {
+            $hasUsage = !empty($subscription['usage_live']) || (int) ($subscription['usage_seconds'] ?? 0) > 0;
+            if ($showSubscriptionProgress === 'true' && !$subscription['inactive'] && $hasUsage) {
                 $progress = $subscription['progress'] > 100 ? 100 : $subscription['progress'];
                 ?>
                 <div class="subscription-progress-container">

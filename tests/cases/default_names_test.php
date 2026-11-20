@@ -21,10 +21,10 @@
       still untouched.
 */
 
-require_once WALLOS_ROOT . '/includes/default_names.php';
+require_once DIAMON_ROOT . '/includes/default_names.php';
 
 /**
- * The languages Wallos ships a translation file for.
+ * The languages Diamon ships a translation file for.
  *
  * @return string[]
  */
@@ -32,7 +32,7 @@ function default_names_test_languages()
 {
     $languages = [];
 
-    foreach (glob(WALLOS_ROOT . '/includes/i18n/*.php') as $file) {
+    foreach (glob(DIAMON_ROOT . '/includes/i18n/*.php') as $file) {
         $name = basename($file, '.php');
 
         if ($name !== 'languages' && $name !== 'getlang') {
@@ -53,7 +53,7 @@ function default_names_test_languages()
 function default_names_test_table($language)
 {
     $i18n = [];
-    require WALLOS_ROOT . '/includes/i18n/' . $language . '.php';
+    require DIAMON_ROOT . '/includes/i18n/' . $language . '.php';
 
     return $i18n;
 }
@@ -83,7 +83,7 @@ function default_names_test_rows($db, $table, $userId)
     return $names;
 }
 
-wallos_test('the default categories are the account language, not English', function () {
+diamon_test('the default categories are the account language, not English', function () {
     $english = default_categories('en');
     $german = default_categories('de');
 
@@ -99,7 +99,7 @@ wallos_test('the default categories are the account language, not English', func
     assert_true($german !== $english, 'the two languages are not the same list');
 });
 
-wallos_test('the default payment methods translate the generic ones and keep the brands', function () {
+diamon_test('the default payment methods translate the generic ones and keep the brands', function () {
     $english = default_payment_methods('en');
     $german = default_payment_methods('de');
 
@@ -120,7 +120,7 @@ wallos_test('the default payment methods translate the generic ones and keep the
     }
 });
 
-wallos_test('a language that has not translated a name yet answers in English', function () {
+diamon_test('a language that has not translated a name yet answers in English', function () {
     // The property that makes this shippable without inventing translations:
     // every language file that does not carry a key answers with the English
     // string, and never with the key itself. Checked against the raw language
@@ -167,7 +167,7 @@ wallos_test('a language that has not translated a name yet answers in English', 
         'every shipped language was checked (' . count($languages) . ')');
 });
 
-wallos_test('a language value that names no translation is English, not an error', function () {
+diamon_test('a language value that names no translation is English, not an error', function () {
     $english = default_categories('en');
 
     // The value arrives from a form field, an OIDC claim or the user table and
@@ -178,7 +178,7 @@ wallos_test('a language value that names no translation is English, not an error
     }
 });
 
-wallos_test('a language written as a BCP-47 tag finds its file', function () {
+diamon_test('a language written as a BCP-47 tag finds its file', function () {
     // What a browser and an identity provider send. The file names use an
     // underscore, and a language nobody can reach is a language nobody gets.
     // "username" is a string the two Portuguese translations spell differently,
@@ -191,11 +191,11 @@ wallos_test('a language written as a BCP-47 tag finds its file', function () {
         'the two spellings really are different, so the check above can fail');
 });
 
-wallos_test('the seeding paths no longer carry an English list of their own', function () {
+diamon_test('the seeding paths no longer carry an English list of their own', function () {
     // Three copies of the same list is how the English one survived being
     // fixed twice before. The names live in one file now.
     foreach (['registration.php', 'endpoints/admin/adduser.php', 'includes/oidc/oidc_create_user.php'] as $file) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $file);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $file);
 
         assert_contains('default_categories($language)', $source,
             $file . ' seeds the categories in the account language');
@@ -212,16 +212,16 @@ wallos_test('the seeding paths no longer carry an English list of their own', fu
     // The first account is the one the loop above cannot describe: it is not
     // seeded at all, it is renamed.
     assert_contains('localize_default_names($db, $userId, $language)',
-        file_get_contents(WALLOS_ROOT . '/registration.php'),
+        file_get_contents(DIAMON_ROOT . '/registration.php'),
         'registration.php localizes the rows the first account inherits');
 });
 
-wallos_test('the first account is renamed into its language, rows and all', function () {
+diamon_test('the first account is renamed into its language, rows and all', function () {
     // createdatabase.php seeded these rows and migration 000020 gave them to
     // user 1; the test database is built by running both, so this is the real
     // state a first registration finds.
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $before = default_names_test_rows($db, 'categories', 1);
     assert_same(17, count($before), 'the installation seeded its categories');
@@ -245,9 +245,9 @@ wallos_test('the first account is renamed into its language, rows and all', func
     $db->close();
 });
 
-wallos_test('renaming leaves English accounts and other people\'s rows alone', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('renaming leaves English accounts and other people\'s rows alone', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     assert_same(0, localize_default_names($db, 1, 'en'),
         'an English account has nothing to rename');
@@ -255,7 +255,7 @@ wallos_test('renaming leaves English accounts and other people\'s rows alone', f
         'and its rows are untouched');
 
     // A second account's rows are its own, whatever language the first picks.
-    wallos_test_create_user($db, 2, 'bob');
+    diamon_test_create_user($db, 2, 'bob');
     $statement = $db->prepare('INSERT INTO categories (name, "order", user_id) VALUES (:name, 1, 2)');
     $statement->bindValue(':name', 'Entertainment', SQLITE3_TEXT);
     $statement->execute();
@@ -268,9 +268,9 @@ wallos_test('renaming leaves English accounts and other people\'s rows alone', f
     $db->close();
 });
 
-wallos_test('a name somebody chose themselves is never rewritten', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('a name somebody chose themselves is never rewritten', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $statement = $db->prepare("UPDATE categories SET name = 'Filme' WHERE user_id = 1 AND name = 'Entertainment'");
     $statement->execute();
@@ -284,7 +284,7 @@ wallos_test('a name somebody chose themselves is never rewritten', function () {
     $db->close();
 });
 
-wallos_test('every key the seeding uses exists in English', function () {
+diamon_test('every key the seeding uses exists in English', function () {
     // A typo in a key is invisible at runtime: it falls back to English, and
     // the English table does not have it either, so the account is seeded with
     // the key as its category name.
@@ -320,7 +320,7 @@ wallos_test('every key the seeding uses exists in English', function () {
   rather than an English literal.
 */
 
-wallos_test('the no-category default matches what a fresh account of that language is actually seeded with', function () {
+diamon_test('the no-category default matches what a fresh account of that language is actually seeded with', function () {
     // The property this function exists for: comparing $category['name'] to
     // default_no_category_name($account's own language) is exactly comparing
     // against what default_categories() put there in the first place.
@@ -330,7 +330,7 @@ wallos_test('the no-category default matches what a fresh account of that langua
     }
 });
 
-wallos_test('the no-category default already differs by language, with no new translations needed', function () {
+diamon_test('the no-category default already differs by language, with no new translations needed', function () {
     // "no_category" is not a key #1216 introduced - it already existed,
     // already translated, in every language file, which is what makes this
     // safe to use for every account regardless of when it registered.
@@ -340,14 +340,14 @@ wallos_test('the no-category default already differs by language, with no new tr
     assert_same('カテゴリなし', default_no_category_name('ja'), 'the Japanese default');
 });
 
-wallos_test('an unrecognised language answers the English default, same as everything else here', function () {
+diamon_test('an unrecognised language answers the English default, same as everything else here', function () {
     foreach (['', 'xx', 'not a language', "../../../etc/passwd\0"] as $value) {
         assert_same('No category', default_no_category_name($value),
             var_export($value, true) . ' falls back to English');
     }
 });
 
-wallos_test('a category renamed by its owner matches neither default, and is shown as stored', function () {
+diamon_test('a category renamed by its owner matches neither default, and is shown as stored', function () {
     // The comparison this function feeds is an == against a fixed string:
     // a category somebody has genuinely renamed - to anything, including
     // another language's word for "no category" - is not the placeholder and
@@ -356,7 +356,7 @@ wallos_test('a category renamed by its owner matches neither default, and is sho
     assert_true('Sin categoría' !== default_no_category_name('de'), 'nor the German one');
 });
 
-wallos_test('every display site recognises the placeholder by language, not by an English literal', function () {
+diamon_test('every display site recognises the placeholder by language, not by an English literal', function () {
     // The three places that used to compare $category['name'] == "No category":
     // stats.php's filter menu, includes/filters_menu.php, and the stats
     // subtitle in includes/stats_calculations.php. Each has to have moved to
@@ -369,7 +369,7 @@ wallos_test('every display site recognises the placeholder by language, not by a
         'includes/filters_menu.php',
         'includes/stats_calculations.php',
     ] as $path) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $path);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $path);
 
         assert_contains('default_names.php', $source, $path . ' includes the default names helper');
         assert_contains('default_no_category_name(', $source,
@@ -379,9 +379,9 @@ wallos_test('every display site recognises the placeholder by language, not by a
     }
 });
 
-wallos_test('an account that changes its language takes its default names with it', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('an account that changes its language takes its default names with it', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     // A name of her own, to stay as it is.
     $statement = $db->prepare('UPDATE categories SET name = :name WHERE user_id = 1 AND name = :english');
@@ -405,9 +405,9 @@ wallos_test('an account that changes its language takes its default names with i
     $db->close();
 });
 
-wallos_test('a save that does not change the language renames nothing', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('a save that does not change the language renames nothing', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     assert_same(0, localize_default_names_on_language_change($db, 1, 'de', 'de'),
         'the same language twice is not a change');
@@ -420,8 +420,8 @@ wallos_test('a save that does not change the language renames nothing', function
     $db->close();
 });
 
-wallos_test('the endpoint that saves a language is the one that applies it', function () {
-    $source = file_get_contents(WALLOS_ROOT . '/endpoints/user/save_user.php');
+diamon_test('the endpoint that saves a language is the one that applies it', function () {
+    $source = file_get_contents(DIAMON_ROOT . '/endpoints/user/save_user.php');
 
     assert_contains('localize_default_names_on_language_change($db, $userId, $storedLanguage, $language)', $source,
         'save_user.php applies the change through the guarded helper');
@@ -429,9 +429,9 @@ wallos_test('the endpoint that saves a language is the one that applies it', fun
         'and it reads the language it had, in the query it already ran');
 });
 
-wallos_test('switching from one non-English language to another renames the seeded names again', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('switching from one non-English language to another renames the seeded names again', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     // She names one of the seeded rows herself, then walks English -> German -> French.
     $statement = $db->prepare('UPDATE categories SET name = :name WHERE user_id = 1 AND name = :english');
@@ -456,9 +456,9 @@ wallos_test('switching from one non-English language to another renames the seed
     $db->close();
 });
 
-wallos_test('switching back to English restores the English names', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('switching back to English restores the English names', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     localize_default_names_on_language_change($db, 1, 'en', 'de');
     localize_default_names_on_language_change($db, 1, 'de', 'en');
@@ -471,9 +471,9 @@ wallos_test('switching back to English restores the English names', function () 
     $db->close();
 });
 
-wallos_test('names that are still English are renamed even when the account was not in English', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('names that are still English are renamed even when the account was not in English', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     // The language on record says German, the rows were never localized: they
     // are the English ones the installation seeded. A switch to French still
@@ -487,10 +487,10 @@ wallos_test('names that are still English are renamed even when the account was 
     $db->close();
 });
 
-wallos_test('a language switch leaves another account\'s names alone', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
-    wallos_test_create_user($db, 2, 'bob');
+diamon_test('a language switch leaves another account\'s names alone', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
+    diamon_test_create_user($db, 2, 'bob');
 
     foreach (['Entertainment', 'Music'] as $name) {
         $statement = $db->prepare('INSERT INTO categories (name, "order", user_id) VALUES (:name, 1, 2)');
@@ -507,9 +507,9 @@ wallos_test('a language switch leaves another account\'s names alone', function 
     $db->close();
 });
 
-wallos_test('a rename never feeds the next one: each row is renamed once', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('a rename never feeds the next one: each row is renamed once', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     // Rows carrying the German default for a position are all found before any
     // is written, so a target name that happens to be another position's

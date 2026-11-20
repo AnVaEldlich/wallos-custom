@@ -6,6 +6,8 @@
   Runs no queries of its own — on some pages $db is already closed here.
 */
 require_once __DIR__ . '/getdbkeys.php';
+require_once __DIR__ . '/provider_catalog.php';
+$providerCatalogForDetails = get_provider_catalog();
 ?>
 
 <div class="details-backdrop" id="details-backdrop" onClick="closeSubscriptionDetails()"></div>
@@ -25,6 +27,11 @@ require_once __DIR__ . '/getdbkeys.php';
   <div class="details-price-row">
     <span class="details-price" id="details-price"></span>
     <span class="details-cycle" id="details-billing-cycle"></span>
+    <button type="button" class="button secondary-button details-action-button details-edit-button"
+      id="details-edit-button" title="<?= translate('edit', $i18n) ?>"
+      aria-label="<?= translate('edit', $i18n) ?>">
+      <i class="fa-solid fa-pen"></i>
+    </button>
     <button type="button" class="button secondary-button details-action-button details-export-button"
       id="details-export-button" title="<?= translate('export_icalendar', $i18n) ?>"
       aria-label="<?= translate('export_icalendar', $i18n) ?>">
@@ -75,6 +82,30 @@ require_once __DIR__ . '/getdbkeys.php';
       <dt><?= translate('replaced_with', $i18n) ?></dt>
       <dd id="details-replacement"></dd>
     </div>
+    <div class="details-item" id="details-usage-item">
+      <dt><?= translate('usage', $i18n) ?></dt>
+      <dd id="details-usage"></dd>
+    </div>
+    <div class="details-item hide" id="details-usage-measured-item">
+      <dt><?= translate('usage_measured', $i18n) ?></dt>
+      <dd id="details-usage-measured"></dd>
+    </div>
+    <div class="details-item hide" id="details-usage-estimated-item">
+      <dt><?= translate('usage_estimated', $i18n) ?></dt>
+      <dd id="details-usage-estimated"></dd>
+    </div>
+    <div class="details-item hide" id="details-usage-manual-item">
+      <dt><?= translate('usage_manual', $i18n) ?></dt>
+      <dd id="details-usage-manual"></dd>
+    </div>
+    <div class="details-item hide" id="details-usage-last-item">
+      <dt><?= translate('usage_last_used', $i18n) ?></dt>
+      <dd id="details-usage-last"></dd>
+    </div>
+    <div class="details-item hide" id="details-usage-device-item">
+      <dt><?= translate('usage_device', $i18n) ?></dt>
+      <dd id="details-usage-device"></dd>
+    </div>
   </dl>
   <div class="details-notes hide" id="details-notes-item">
     <i class="fa-solid fa-note-sticky"></i>
@@ -107,6 +138,12 @@ $detailsLookups = [
     'day_before' => translate('day_before', $i18n),
     'days_before' => translate('days_before', $i18n),
     'none' => translate('none', $i18n),
+    'usage_none' => translate('usage_none', $i18n),
+    'usage_measured' => translate('usage_measured', $i18n),
+    'usage_estimated' => translate('usage_estimated', $i18n),
+    'usage_manual' => translate('usage_manual', $i18n),
+    'usage_last_used' => translate('usage_last_used', $i18n),
+    'usage_device' => translate('usage_device', $i18n),
   ],
 ];
 foreach ($categories as $categoryId => $category) {
@@ -133,6 +170,7 @@ foreach ($subscriptions as $detailsSubscription) {
 }
 ?>
 <script>
+  window.providerCatalog = <?= json_encode($providerCatalogForDetails, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
   window.subscriptionLookups = <?= json_encode($detailsLookups, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 </script>
 <script src="scripts/subscription-details.js?<?= $version ?>"></script>

@@ -88,7 +88,7 @@ if ($userId !== 1) {
 
 // 1. Handle OIDC Enabled Toggle
 if (isset($_POST['oidc_enabled'])) {
-    if (wallos_has_oidc_env_value('OIDC_ENABLED')) {
+    if (diamon_has_oidc_env_value('OIDC_ENABLED')) {
         echo json_encode([
             'success' => false,
             'title' => 'Environment override',
@@ -104,9 +104,9 @@ if (isset($_POST['oidc_enabled'])) {
 }
 
 // 2. Handle OIDC detailed configurations
-$oidcConfiguration = wallos_get_effective_oidc_configuration($db);
+$oidcConfiguration = diamon_get_effective_oidc_configuration($db);
 $managedFields = $oidcConfiguration['managed_fields'];
-$dbSettings = wallos_get_db_oidc_settings($db);
+$dbSettings = diamon_get_db_oidc_settings($db);
 
 $incomingMapping = [
     'name' => $_POST['name'] ?? null,

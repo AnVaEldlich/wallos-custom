@@ -57,11 +57,11 @@ function logo_fetch_helper_body($source)
     return $end === false ? substr($source, $start) : substr($source, $start, $end - $start);
 }
 
-wallos_test('every copy of the logo fetch answers in the same shape', function () {
+diamon_test('every copy of the logo fetch answers in the same shape', function () {
     $checked = 0;
 
     foreach (logo_fetch_files() as $path) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $path);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $path);
         $body = logo_fetch_helper_body($source);
 
         assert_true($body !== '', $path . ' carries a copy of the helper');
@@ -84,11 +84,11 @@ wallos_test('every copy of the logo fetch answers in the same shape', function (
     assert_same(4, $checked, 'all four copies were found and checked');
 });
 
-wallos_test('every caller reads the answer before using it', function () {
+diamon_test('every caller reads the answer before using it', function () {
     $callSites = 0;
 
     foreach (logo_fetch_files() as $path) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $path);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $path);
         $lines = preg_split('/\R/', $source);
 
         foreach ($lines as $number => $line) {
@@ -115,5 +115,6 @@ wallos_test('every caller reads the answer before using it', function () {
         }
     }
 
-    assert_same(6, $callSites, 'all six call sites were found and checked');
+    // The seventh is the catalogue-logo fallback in endpoints/subscription/add.php.
+    assert_same(7, $callSites, 'all seven call sites were found and checked');
 });

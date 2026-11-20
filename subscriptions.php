@@ -8,6 +8,8 @@ require_once 'includes/provider_catalog.php';
 include_once 'includes/list_subscriptions.php';
 require_once 'includes/subscription_payers.php';
 require_once 'includes/subscription_categories.php';
+require_once 'includes/usage_sessions.php';
+require_once 'includes/subscription_value_score.php';
 
 $providerCatalog = get_provider_catalog();
 
@@ -273,26 +275,26 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
 
     $print = [];
     foreach ($subscriptions as $subscription) {
-      if ($subscription['inactive'] == 1 && isset($settings['hideDisabledSubscriptions']) && $settings['hideDisabledSubscriptions'] === 'true') {
-        continue;
-      }
       $id = $subscription['id'];
       $print[$id]['id'] = $id;
       $print[$id]['logo'] = $subscription['logo'] != "" ? "images/uploads/logos/" . $subscription['logo'] : "";
       $print[$id]['logo_text_color'] = $subscription['logo_text_color'] ?? null;
       $print[$id]['logo_variant'] = !empty($subscription['logo_variant']) ? "images/uploads/logos/" . $subscription['logo_variant'] : null;
+      $print[$id]['provider_catalog_id'] = $subscription['provider_catalog_id'] ?? '';
       $print[$id]['name'] = $subscription['name'];
       $cycle = $subscription['cycle'];
       $frequency = $subscription['frequency'];
       $print[$id]['billing_cycle'] = getBillingCycle($cycle, $frequency, $i18n);
       $print[$id]['one_time'] = ($cycle == 5);
+      $print[$id]['cycle'] = $cycle;
+      $print[$id]['frequency'] = $frequency;
       $paymentMethodId = $subscription['payment_method_id'];
-      $print[$id]['currency_code'] = $currencies[$subscription['currency_id']]['code'];
       $currencyId = $subscription['currency_id'];
       $print[$id]['auto_renew'] = $subscription['auto_renew'];
       $next_payment_timestamp = strtotime($subscription['next_payment']);
       $formatted_date = $formatter->format($next_payment_timestamp);
       $print[$id]['next_payment'] = $formatted_date;
+      $print[$id]['next_payment_iso'] = date('Y-m-d', $next_payment_timestamp);
       $paymentIcon = $payment_methods[$paymentMethodId ?? ""]['icon'] ?? "";
       $paymentIconFolder = (strpos($paymentIcon, 'images/uploads/icons/') !== false) ? "" : "images/uploads/logos/";
       $print[$id]['payment_method_icon'] = $paymentIcon === "" ? "" : $paymentIconFolder . $paymentIcon;
@@ -302,18 +304,16 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $print[$id]['category_ids'] = $categoriesBySubscription[$id] ?? [];
       $print[$id]['payer_user_id'] = $subscription['payer_user_id'];
       $print[$id]['payer_user_ids'] = $payersBySubscription[$id] ?? [];
-      $print[$id]['price'] = floatval($subscription['price']);
+      applyDisplayedSubscriptionPrice($print[$id], $subscription['price'], $currencyId, $mainCurrencyId, $settings, $currencies, $db);
+      $print[$id]['score_monthly_price'] = getPricePerMonth($cycle, $frequency, $print[$id]['price']);
       $print[$id]['sort_price'] = getSortPrice($subscription['price'], $subscription['currency_id'], $mainCurrencyId, $cycle, $frequency, $settings, $db);
       $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment']);
       $print[$id]['inactive'] = $subscription['inactive'];
+      $print[$id]['cancellation_date'] = $subscription['cancellation_date'] ?? null;
       $print[$id]['url'] = $subscription['url'];
       $print[$id]['notes'] = $subscription['notes'];
       $print[$id]['replacement_subscription_id'] = $subscription['replacement_subscription_id'];
 
-      if (isset($settings['convertCurrency']) && $settings['convertCurrency'] === 'true' && $currencyId != $mainCurrencyId) {
-        $print[$id]['price'] = getPriceConverted($print[$id]['price'], $currencyId, $db);
-        $print[$id]['currency_code'] = $currencies[$mainCurrencyId]['code'];
-      }
       if (isset($settings['showMonthlyPrice']) && $settings['showMonthlyPrice'] === 'true') {
         $print[$id]['price'] = getPricePerMonth($cycle, $frequency, $print[$id]['price']);
       }
@@ -322,6 +322,18 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
         $print[$id]['original_currency_code'] = $currencies[$subscription['currency_id']]['code'];
       }
     }
+
+    $usageAsOf = time();
+    $usageSummaries = usage_summaries_for_user($db, $userId, $usageAsOf);
+    foreach ($print as $usageId => $usageRow) {
+      $usageSummary = $usageSummaries[$usageRow['id']] ?? usage_empty_summary($usageAsOf);
+      $print[$usageId]['usage_label'] = usage_format_duration($usageSummary['total']);
+      $print[$usageId]['usage_seconds'] = $usageSummary['total'];
+      $print[$usageId]['usage_last_used'] = $usageSummary['last_used'];
+      $print[$usageId]['usage_live'] = $usageSummary['live'];
+      $print[$usageId]['usage_as_of'] = $usageSummary['as_of'];
+    }
+    attach_subscription_value_bands($db, $userId, $print);
 
     if ($sortOrder == "alphanumeric") {
       usort($print, function ($a, $b) {
@@ -431,7 +443,11 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       <input type="text" id="name" name="name" autocomplete="off"
         placeholder="<?= translate('subscription_name', $i18n) ?>"
         onchange="setSearchButtonStatus()" onkeypress="this.onchange();" onpaste="this.onchange();"
-        oninput="this.onchange();" required>
+        oninput="this.onchange(); syncProviderCatalogIdFromName();" required>
+    </div>
+    <input type="hidden" id="id" name="id">
+    <input type="hidden" id="provider_catalog_id" name="provider_catalog_id" value="">
+    <div class="form-group-inline hide" id="subscription-logo-fields">
       <label for="logo" class="logo-preview">
         <img src="" alt="<?= translate('logo_preview', $i18n) ?>" id="form-logo">
       </label>
@@ -442,7 +458,6 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
         onClick="searchLogo()">
         <i class="fa-solid fa-magnifying-glass"></i>
       </div>
-      <input type="hidden" id="id" name="id">
       <div class="logo-search-backdrop" id="logo-search-backdrop" onClick="closeLogoSearch()"></div>
       <div id="logo-search-results" class="logo-search"<?= !empty($googleSearchEnabled) ? ' data-google-search="1"' : '' ?>>
         <button type="button" class="close-logo-search" onClick="closeLogoSearch()" title="<?= translate('cancel', $i18n) ?>">
@@ -469,19 +484,20 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
     </div>
 
     <div class="form-group-inline">
-      <input type="number" step="0.01" id="price" name="price" autocomplete="off"
+      <input type="text" inputmode="decimal" id="price" name="price" autocomplete="off"
         placeholder="<?= translate('price', $i18n) ?>" required>
       <select id="currency" name="currency_id" placeholder="<?= translate('add_subscription', $i18n) ?>">
         <?php
         foreach ($currencies as $currency) {
           $selected = ($currency['id'] == $main_currency) ? 'selected' : '';
           ?>
-          <option value="<?= $currency['id'] ?>" <?= $selected ?>><?= $currency['name'] ?></option>
+          <option value="<?= $currency['id'] ?>" data-code="<?= htmlspecialchars($currency['code'], ENT_QUOTES, 'UTF-8') ?>" <?= $selected ?>><?= $currency['name'] ?></option>
           <?php
         }
         ?>
       </select>
     </div>
+    <p id="price-error" class="price-error" hidden></p>
 
     <div class="form-group">
       <div class="inline">
@@ -711,11 +727,9 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
   </form>
   </div>
 </section>
-<script type="text/javascript">
-  window.providerCatalog = <?= json_encode($providerCatalog, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) ?>;
-</script>
 
 <?php require_once 'includes/subscription_details_popup.php'; ?>
+<script src="scripts/price-input.js?<?= $version ?>"></script>
 <script src="scripts/subscriptions.js?<?= $version ?>"></script>
 <?php
 if (isset($_GET['add'])) {

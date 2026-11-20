@@ -5,6 +5,87 @@ const shouldScroll = window.innerWidth <= 768;
 // subscription form. Edit always opens the form and never the catalogue.
 let subscriptionModalView = "catalog";
 let selectedProviderId = null;
+
+function formatUsageDuration(seconds) {
+  seconds = Math.max(0, Math.floor(seconds));
+  if (seconds === 0) {
+    return "";
+  }
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  const parts = [];
+  if (hours > 0) {
+    parts.push(`${hours} h`);
+  }
+  if (minutes > 0 || hours > 0) {
+    parts.push(`${minutes} min`);
+  }
+  parts.push(`${remainingSeconds} s`);
+  return parts.join(" ");
+}
+
+function updateUsageTimeLabels(now = Date.now() / 1000) {
+  document.querySelectorAll("#subscriptions .usage-time").forEach((element) => {
+    const seconds = Number(element.dataset.usageSeconds) || 0;
+    const asOf = Number(element.dataset.usageAsOf) || now;
+    const isLive = element.dataset.usageLive === "1";
+    const elapsed = isLive ? Math.max(0, Math.floor(now - asOf)) : 0;
+    const label = formatUsageDuration(seconds + elapsed);
+    element.textContent = label || (isLive ? "0 s" : element.dataset.usageEmpty);
+  });
+}
+
+let liveUsageRefreshInFlight = false;
+
+async function refreshLiveUsageTimes() {
+  if (liveUsageRefreshInFlight || document.visibilityState === "hidden") {
+    return;
+  }
+  liveUsageRefreshInFlight = true;
+  try {
+    const response = await fetch("endpoints/usage/live.php", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Usage refresh failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    if (!data.success || !Array.isArray(data.subscriptions)) {
+      throw new Error(data.title || "Invalid usage response");
+    }
+
+    const asOf = Number(data.as_of) || Math.floor(Date.now() / 1000);
+    const summaries = new Map(data.subscriptions.map((item) => [Number(item.id), item]));
+    document.querySelectorAll("#subscriptions .usage-time").forEach((element) => {
+      const summary = summaries.get(Number(element.dataset.usageId));
+      element.dataset.usageSeconds = summary ? String(Number(summary.seconds) || 0) : "0";
+      element.dataset.usageLive = summary && summary.live ? "1" : "0";
+      element.dataset.usageAsOf = String(summary ? Number(summary.as_of) || asOf : asOf);
+    });
+    updateUsageTimeLabels(asOf);
+  } catch (error) {
+    console.error("Could not refresh live subscription usage", error);
+  } finally {
+    liveUsageRefreshInFlight = false;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  if (!document.querySelector("#subscriptions .usage-time")) {
+    return;
+  }
+
+  updateUsageTimeLabels();
+  refreshLiveUsageTimes();
+  // Local clock for smooth seconds; live.php sync keeps start/stop in sync with the extension heartbeat.
+  setInterval(() => updateUsageTimeLabels(), 1000);
+  setInterval(refreshLiveUsageTimes, 1000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      refreshLiveUsageTimes();
+    }
+  });
+});
+
 function toggleSortOptions() {
   const sortOptions = document.querySelector("#sort-options");
   sortOptions.classList.toggle("is-open");
@@ -182,6 +263,41 @@ function resetForm() {
   deleteButton.style = 'display: none';
   deleteButton.removeAttribute("onClick");
   selectedProviderId = null;
+  const providerCatalogIdInput = document.querySelector("#provider_catalog_id");
+  if (providerCatalogIdInput) {
+    providerCatalogIdInput.value = "";
+  }
+  const logoFields = document.querySelector("#subscription-logo-fields");
+  if (logoFields) {
+    logoFields.classList.add("hide");
+  }
+}
+
+function applyProviderCatalogLogo(providerId) {
+  const providerCatalogIdInput = document.querySelector("#provider_catalog_id");
+  if (providerCatalogIdInput) {
+    providerCatalogIdInput.value = providerId || "";
+  }
+  selectedProviderId = providerId || null;
+}
+
+function syncProviderCatalogIdFromName() {
+  const idField = document.querySelector("#id");
+  if (idField && idField.value !== "") {
+    return;
+  }
+  const name = (document.querySelector("#name")?.value || "").trim().toLowerCase();
+  if (name === "") {
+    applyProviderCatalogLogo(null);
+    return;
+  }
+  const entry = (window.providerCatalog || []).find((provider) => {
+    if (provider.name.toLowerCase() === name) {
+      return true;
+    }
+    return (provider.search_terms || []).some((term) => String(term).toLowerCase() === name);
+  });
+  applyProviderCatalogLogo(entry ? entry.id : null);
 }
 
 function showProviderCatalogView() {
@@ -271,6 +387,7 @@ function selectProviderFromCatalog(button) {
   if (urlInput && url) {
     urlInput.value = url;
   }
+  applyProviderCatalogLogo(selectedProviderId);
 
   showSubscriptionFormView({ showBack: true });
   if (nameInput) {
@@ -346,11 +463,15 @@ function fillEditFormFields(subscription) {
   id.value = subscription.id;
   const name = document.querySelector("#name");
   name.value = subscription.name;
-  const price = document.querySelector("#price");
-  price.value = subscription.price;
-
   const currencySelect = document.querySelector("#currency");
   currencySelect.value = subscription.currency_id.toString();
+  const price = document.querySelector("#price");
+  price.value = typeof formatStoredSubscriptionPrice === "function"
+    ? formatStoredSubscriptionPrice(subscription.price)
+    : subscription.price;
+  if (typeof rememberSubscriptionCurrency === "function") {
+    rememberSubscriptionCurrency();
+  }
   const frequencySelect = document.querySelector("#frequency");
   frequencySelect.value = subscription.frequency;
   const cycleSelect = document.querySelector("#cycle");
@@ -408,6 +529,15 @@ function fillEditFormFields(subscription) {
   const deleteButton = document.querySelector("#deletesub");
   deleteButton.style = 'display: block';
   deleteButton.setAttribute("onClick", `deleteSubscription(event, ${subscription.id})`);
+
+  const providerCatalogIdInput = document.querySelector("#provider_catalog_id");
+  if (providerCatalogIdInput) {
+    providerCatalogIdInput.value = subscription.provider_catalog_id || "";
+  }
+  const logoFields = document.querySelector("#subscription-logo-fields");
+  if (logoFields) {
+    logoFields.classList.remove("hide");
+  }
 
   showSubscriptionFormView({ showBack: false });
   const modal = document.getElementById('subscription-form');
@@ -973,6 +1103,11 @@ function submitFormData(formData, submitButton, endpoint) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+  const editId = new URLSearchParams(window.location.search).get("edit");
+  if (editId && document.getElementById("subscription-form")) {
+    openEditSubscription({ stopPropagation() {} }, editId);
+  }
+
   const cycleSelectEl = document.querySelector("#cycle");
   if (cycleSelectEl) {
     cycleSelectEl.addEventListener("change", function () {
@@ -996,6 +1131,16 @@ document.addEventListener('DOMContentLoaded', function () {
   subscriptionForm.addEventListener("submit", function (e) {
     e.preventDefault();
 
+    const priceInput = document.querySelector("#price");
+    if (priceInput && typeof subscriptionPriceError === "function") {
+      const priceError = subscriptionPriceError(priceInput.value);
+      if (priceError) {
+        submitButton.disabled = false;
+        priceInput.focus();
+        return;
+      }
+    }
+
     submitButton.disabled = true;
 
     const cycleVal = document.querySelector("#cycle")?.value;
@@ -1009,6 +1154,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const formData = new FormData(subscriptionForm);
+    if (priceInput && typeof normalizeSubscriptionPrice === "function") {
+      formData.set("price", normalizeSubscriptionPrice(priceInput.value));
+    }
 
     const fileInput = document.querySelector("#logo");
     const file = fileInput.files[0];

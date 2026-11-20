@@ -2,10 +2,10 @@
 /* Exercise the actual page/endpoint fragments: both require a live session,
    so execute only their relation lookups with warnings promoted to errors. */
 function subscription_relations_source($file) {
-    return file_get_contents(WALLOS_ROOT . '/' . $file);
+    return file_get_contents(DIAMON_ROOT . '/' . $file);
 }
 
-wallos_test('subscription relation counts ignore absent and unresolved optional IDs', function () {
+diamon_test('subscription relation counts ignore absent and unresolved optional IDs', function () {
     $source = subscription_relations_source('subscriptions.php');
     $start = strpos($source, 'foreach ($subscriptions as $subscription) {');
     $end = strpos($source, 'if ($sortOrder == "category_id")', $start);
@@ -28,7 +28,7 @@ wallos_test('subscription relation counts ignore absent and unresolved optional 
     assert_same([9 => ['count' => 1]], $payment_methods, 'only known payment method counted');
 });
 
-wallos_test('initial and filtered lists preserve known payment methods and omit missing metadata', function () {
+diamon_test('initial and filtered lists preserve known payment methods and omit missing metadata', function () {
     foreach (['subscriptions.php', 'endpoints/subscriptions/get.php'] as $file) {
         $source = subscription_relations_source($file);
         // Start at the icon lookup, ending before unrelated subscription fields.
@@ -50,7 +50,7 @@ wallos_test('initial and filtered lists preserve known payment methods and omit 
     }
 });
 
-wallos_test('relation sort puts missing IDs last without changing configured order', function () {
+diamon_test('relation sort puts missing IDs last without changing configured order', function () {
     foreach (['subscriptions.php', 'endpoints/subscriptions/get.php'] as $file) {
         $source = subscription_relations_source($file);
         foreach (['categories' => 'category_id', 'payment_methods' => 'payment_method_id'] as $lookup => $key) {

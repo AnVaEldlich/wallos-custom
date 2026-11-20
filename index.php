@@ -98,6 +98,19 @@ $hasUpcomingCancellations = !empty($upcomingCancellations);
 
 require_once 'includes/stats_calculations.php';
 
+$formatDashboardMoney = function ($amount) use ($userData, $settings, $currencies, $db, $userId) {
+    $display = convert_dashboard_total(
+        $amount,
+        $userData['main_currency'],
+        $settings,
+        $currencies,
+        $db,
+        $userId
+    );
+
+    return formatPrice($display['price'], $display['currency_code'], $currencies);
+};
+
 // Get AI Recommendations for user
 $stmt = $db->prepare("SELECT * FROM ai_recommendations WHERE user_id = :userId");
 $stmt->bindValue(':userId', $userId, SQLITE3_INTEGER);
@@ -162,11 +175,18 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
 
                     foreach ($overdueSubscriptions as $subscription) {
                         $subscriptionName = htmlspecialchars($subscription['name']);
-                        $subscriptionPrice = $subscription['price'];
-                        $subscriptionCurrency = $subscription['currency_id'];
                         $subscriptionNextPayment = $subscription['next_payment'];
                         $subscriptionDisplayNextPayment = formatDate($subscriptionNextPayment, $lang);
-                        $subscriptionDisplayPrice = formatPrice($subscriptionPrice, $currencies[$subscriptionCurrency]['code'], $currencies);
+                        $displayAmount = resolve_dashboard_display_price(
+                            $subscription['price'],
+                            $subscription['currency_id'],
+                            $userData['main_currency'],
+                            $settings,
+                            $currencies,
+                            $db,
+                            $userId
+                        );
+                        $subscriptionDisplayPrice = formatPrice($displayAmount['price'], $displayAmount['currency_code'], $currencies);
 
                         ?>
                         <div class="subscription-item" onClick="showSubscriptionDetails(event, <?= $subscription['id'] ?>)" data-id="<?= $subscription['id'] ?>">
@@ -209,11 +229,18 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                 } else {
                     foreach ($upcomingSubscriptions as $subscription) {
                         $subscriptionName = htmlspecialchars($subscription['name']);
-                        $subscriptionPrice = $subscription['price'];
-                        $subscriptionCurrency = $subscription['currency_id'];
                         $subscriptionNextPayment = $subscription['next_payment'];
                         $subscriptionDisplayNextPayment = formatDate($subscriptionNextPayment, $lang);
-                        $subscriptionDisplayPrice = formatPrice($subscriptionPrice, $currencies[$subscriptionCurrency]['code'], $currencies);
+                        $displayAmount = resolve_dashboard_display_price(
+                            $subscription['price'],
+                            $subscription['currency_id'],
+                            $userData['main_currency'],
+                            $settings,
+                            $currencies,
+                            $db,
+                            $userId
+                        );
+                        $subscriptionDisplayPrice = formatPrice($displayAmount['price'], $displayAmount['currency_code'], $currencies);
 
                         ?>
                         <div class="subscription-item" onClick="showSubscriptionDetails(event, <?= $subscription['id'] ?>)" data-id="<?= $subscription['id'] ?>">
@@ -248,10 +275,17 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                         <?php
                         foreach ($upcomingCancellations as $subscription) {
                             $subscriptionName = htmlspecialchars($subscription['name']);
-                            $subscriptionPrice = $subscription['price'];
-                            $subscriptionCurrency = $subscription['currency_id'];
                             $subscriptionDisplayCancellationDate = formatDate($subscription['cancellation_date'], $lang);
-                            $subscriptionDisplayPrice = formatPrice($subscriptionPrice, $currencies[$subscriptionCurrency]['code'], $currencies);
+                            $displayAmount = resolve_dashboard_display_price(
+                                $subscription['price'],
+                                $subscription['currency_id'],
+                                $userData['main_currency'],
+                                $settings,
+                                $currencies,
+                                $db,
+                                $userId
+                            );
+                            $subscriptionDisplayPrice = formatPrice($displayAmount['price'], $displayAmount['currency_code'], $currencies);
 
                             ?>
                             <div class="subscription-item" onClick="showSubscriptionDetails(event, <?= $subscription['id'] ?>)" data-id="<?= $subscription['id'] ?>">
@@ -321,7 +355,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                             <p class="subscription-item-title"><?= translate("monthly_cost", $i18n) ?></p>
                             <div class="subscription-item-info">
                                 <p class="subscription-item-value">
-                                    <?= CurrencyFormatter::format($totalCostPerMonth, $currencies[$userData['main_currency']]['code']) ?>
+                                    <?= $formatDashboardMoney($totalCostPerMonth) ?>
                                 </p>
                             </div>
                         </div>
@@ -330,7 +364,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                                 <p class="subscription-item-title"><?= translate("budget", $i18n) ?></p>
                                 <div class="subscription-item-info">
                                     <p class="subscription-item-value">
-                                        <?= formatPrice($monthlyBudget, $currencies[$userData['main_currency']]['code'], $currencies) ?>
+                                        <?= $formatDashboardMoney($monthlyBudget) ?>
                                     </p>
                                 </div>
                             </div>
@@ -348,7 +382,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                                 <p class="subscription-item-title"><?= translate("budget_remaining", $i18n) ?></p>
                                 <div class="subscription-item-info">
                                     <p class="subscription-item-value">
-                                        <?= formatPrice($monthlyBudgetLeft, $currencies[$userData['main_currency']]['code'], $currencies) ?>
+                                        <?= $formatDashboardMoney($monthlyBudgetLeft) ?>
                                     </p>
                                 </div>
                             </div>
@@ -357,7 +391,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                                     <p class="subscription-item-title"><?= translate("over_budget", $i18n) ?></p>
                                     <div class="subscription-item-info">
                                         <p class="subscription-item-value">
-                                            <?= formatPrice($monthlyOverBudgetAmount, $currencies[$userData['main_currency']]['code'], $currencies) ?>
+                                            <?= $formatDashboardMoney($monthlyOverBudgetAmount) ?>
                                         </p>
                                     </div>
                                 </div>
@@ -380,7 +414,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                             <p class="subscription-item-title"><?= translate("amount_needed_this_period", $i18n) ?></p>
                             <div class="subscription-item-info">
                                 <p class="subscription-item-value">
-                                    <?= CurrencyFormatter::format($amountNeededThisPeriod, $currencies[$userData['main_currency']]['code']) ?>
+                                    <?= $formatDashboardMoney($amountNeededThisPeriod) ?>
                                 </p>
                             </div>
                         </div>
@@ -388,7 +422,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                             <p class="subscription-item-title"><?= translate("budget", $i18n) ?></p>
                             <div class="subscription-item-info">
                                 <p class="subscription-item-value">
-                                    <?= formatPrice($periodBudget, $currencies[$userData['main_currency']]['code'], $currencies) ?>
+                                    <?= $formatDashboardMoney($periodBudget) ?>
                                 </p>
                             </div>
                         </div>
@@ -406,7 +440,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                             <p class="subscription-item-title"><?= translate("budget_remaining", $i18n) ?></p>
                             <div class="subscription-item-info">
                                 <p class="subscription-item-value">
-                                    <?= formatPrice($periodBudgetLeft, $currencies[$userData['main_currency']]['code'], $currencies) ?>
+                                    <?= $formatDashboardMoney($periodBudgetLeft) ?>
                                 </p>
                             </div>
                         </div>
@@ -415,7 +449,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                                 <p class="subscription-item-title"><?= translate("over_budget", $i18n) ?></p>
                                 <div class="subscription-item-info">
                                     <p class="subscription-item-value">
-                                        <?= formatPrice($periodOverBudgetAmount, $currencies[$userData['main_currency']]['code'], $currencies) ?>
+                                        <?= $formatDashboardMoney($periodOverBudgetAmount) ?>
                                     </p>
                                 </div>
                             </div>
@@ -443,7 +477,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                             <p class="subscription-item-title"><?= translate('monthly_cost', $i18n) ?></p>
                             <div class="subscription-item-info">
                                 <p class="subscription-item-value">
-                                    <?= CurrencyFormatter::format($totalCostPerMonth, $currencies[$userData['main_currency']]['code']) ?>
+                                    <?= $formatDashboardMoney($totalCostPerMonth) ?>
                                 </p>
                             </div>
                         </div>
@@ -454,7 +488,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                             <p class="subscription-item-title"><?= translate('yearly_cost', $i18n) ?></p>
                             <div class="subscription-item-info">
                                 <p class="subscription-item-value">
-                                    <?= CurrencyFormatter::format($totalCostPerYear, $currencies[$userData['main_currency']]['code']) ?>
+                                    <?= $formatDashboardMoney($totalCostPerYear) ?>
                                 </p>
                             </div>
                         </div>
@@ -481,7 +515,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                             <p class="subscription-item-title"><?= translate('monthly_savings', $i18n) ?></p>
                             <div class="subscription-item-info">
                                 <p class="subscription-item-value">
-                                    <?= CurrencyFormatter::format($totalSavingsPerMonth, $currencies[$userData['main_currency']]['code']) ?>
+                                    <?= $formatDashboardMoney($totalSavingsPerMonth) ?>
                                 </p>
                             </div>
                         </div>
@@ -490,7 +524,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                             <p class="subscription-item-title"><?= translate('yearly_savings', $i18n) ?></p>
                             <div class="subscription-item-info">
                                 <p class="subscription-item-value">
-                                    <?= CurrencyFormatter::format($totalSavingsPerMonth * 12, $currencies[$userData['main_currency']]['code']) ?>
+                                    <?= $formatDashboardMoney($totalSavingsPerMonth * 12) ?>
                                 </p>
                             </div>
                         </div>
@@ -515,7 +549,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
 require_once 'includes/subscription_details_popup.php';
 ?>
 
-<script src="scripts/dashboard.js?<?= $version ?>"></script>
+<script src="scripts/dashboard.js?<?= $version ?>-<?= (int) @filemtime(__DIR__ . '/scripts/dashboard.js') ?>"></script>
 
 <?php
 require_once 'includes/footer.php';

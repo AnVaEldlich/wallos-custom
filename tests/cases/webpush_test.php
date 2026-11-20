@@ -20,12 +20,12 @@
 
   The signing suite verifies a produced VAPID JWT against a public key
   rebuilt purely from its raw bytes - the same 65-byte point a push service
-  or a browser's applicationServerKey ever sees, never a PEM Wallos itself
+  or a browser's applicationServerKey ever sees, never a PEM Diamon itself
   wrote - because that is the only proof a signature this code makes is
   actually one anybody else could check.
 */
 
-require_once WALLOS_ROOT . '/includes/webpush_helper.php';
+require_once DIAMON_ROOT . '/includes/webpush_helper.php';
 
 function webpush_test_b64url_decode($data)
 {
@@ -126,7 +126,7 @@ const WEBPUSH_TEST_VECTOR_SALT = 'DGv6ra1nlYgDCS1FRnbzlw';
 const WEBPUSH_TEST_VECTOR_PLAINTEXT = 'When I grow up, I want to be a watermelon';
 const WEBPUSH_TEST_VECTOR_OUTPUT = 'DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A_yl95bQpu6cVPTpK4Mqgkf1CXztLVBSt2Ks3oZwbuwXPXLWyouBWLVWGNWQexSgSxsj_Qulcy4a-fN';
 
-wallos_test('the encrypted output matches RFC 8291\'s own test vector exactly', function () {
+diamon_test('the encrypted output matches RFC 8291\'s own test vector exactly', function () {
     $ephemeralPem = webpush_test_ec_private_key_pem(
         webpush_test_b64url_decode(WEBPUSH_TEST_VECTOR_AS_PRIVATE),
         webpush_test_b64url_decode(WEBPUSH_TEST_VECTOR_AS_PUBLIC)
@@ -146,7 +146,7 @@ wallos_test('the encrypted output matches RFC 8291\'s own test vector exactly', 
         'the full content-coding header plus ciphertext matches the RFC byte for byte');
 });
 
-wallos_test('the content-coding header the RFC output starts with is the salt, record size and key id', function () {
+diamon_test('the content-coding header the RFC output starts with is the salt, record size and key id', function () {
     // Separately from the byte-exact whole-output check above: the header
     // format itself (RFC 8188), decoded field by field, so a failure here
     // points at the header rather than the ciphertext.
@@ -171,7 +171,7 @@ wallos_test('the content-coding header the RFC output starts with is the salt, r
     assert_same($asPublicRaw, substr($output, 21, 65), 'then the ephemeral public key itself, as the key id');
 });
 
-wallos_test('a fresh ephemeral key and salt change the output, still round-trips through the same shape', function () {
+diamon_test('a fresh ephemeral key and salt change the output, still round-trips through the same shape', function () {
     // Every real send must never reuse an ephemeral key or salt - this is the
     // one case in the suite that lets webpush_encrypt_payload() generate its
     // own, the way production does, and just checks the shape holds.
@@ -185,14 +185,14 @@ wallos_test('a fresh ephemeral key and salt change the output, still round-trips
     assert_true($output !== $output2, 'two calls for the same message never produce the same bytes');
 });
 
-wallos_test('a malformed subscription key is refused rather than guessed at', function () {
+diamon_test('a malformed subscription key is refused rather than guessed at', function () {
     assert_same(false, webpush_encrypt_payload('x', 'not-base64!!!', WEBPUSH_TEST_VECTOR_AUTH_SECRET),
         'a p256dh that does not decode to 65 bytes is refused');
     assert_same(false, webpush_encrypt_payload('x', WEBPUSH_TEST_VECTOR_UA_PUBLIC, 'YQ'),
         'an auth secret that does not decode to 16 bytes is refused');
 });
 
-wallos_test('a VAPID JWT verifies against a public key built purely from its raw bytes', function () {
+diamon_test('a VAPID JWT verifies against a public key built purely from its raw bytes', function () {
     // "Purely from its raw bytes" is the point: a push service never sees a
     // PEM, only the same base64url public key the Authorization header's
     // "k=" carries - so that is what this reconstructs the verifier from.
@@ -222,7 +222,7 @@ wallos_test('a VAPID JWT verifies against a public key built purely from its raw
     assert_same(1, $verified, 'the signature verifies against the raw public key');
 });
 
-wallos_test('the audience drops the endpoint\'s path, and a malformed endpoint is refused', function () {
+diamon_test('the audience drops the endpoint\'s path, and a malformed endpoint is refused', function () {
     $keys = webpush_generate_vapid_keypair();
 
     $jwt = webpush_build_vapid_jwt(
@@ -238,7 +238,7 @@ wallos_test('the audience drops the endpoint\'s path, and a malformed endpoint i
         'an endpoint with no scheme or host is refused rather than signing a token nobody could route to');
 });
 
-wallos_test('DER-to-raw signature conversion round-trips under repeated random signing', function () {
+diamon_test('DER-to-raw signature conversion round-trips under repeated random signing', function () {
     // ECDSA-Sig-Value is variable-width per component (a leading zero byte
     // is added only when needed to avoid the value reading as negative) -
     // the one thing worth stress-testing rather than trusting a handful of
@@ -269,8 +269,8 @@ wallos_test('DER-to-raw signature conversion round-trips under repeated random s
     assert_same(0, $failures, '200 random signatures all round-trip and verify (0 failures)');
 });
 
-wallos_test('the VAPID keypair is generated once and then persisted on the admin row', function () {
-    $db = wallos_test_open_database();
+diamon_test('the VAPID keypair is generated once and then persisted on the admin row', function () {
+    $db = diamon_test_open_database();
 
     $before = $db->querySingle("SELECT vapid_public_key, vapid_private_key FROM admin LIMIT 1", true);
     assert_same('', $before['vapid_public_key'] ?? '', 'nothing generated for an installation that has not needed it yet');
@@ -289,7 +289,7 @@ wallos_test('the VAPID keypair is generated once and then persisted on the admin
     $db->close();
 });
 
-wallos_test('webpush_send() reports 404/410 as prune, and everything else as not', function () {
+diamon_test('webpush_send() reports 404/410 as prune, and everything else as not', function () {
     // The distinction the cron job's pruning logic depends on: 404/410 mean
     // the push service itself has discarded the subscription; nothing else -
     // not a timeout, not a 5xx, not a 429 - says that, and none of the rest
@@ -308,8 +308,8 @@ wallos_test('webpush_send() reports 404/410 as prune, and everything else as not
     }
 });
 
-wallos_test('a second first-use does not replace the keypair the browsers already know', function () {
-    $db = wallos_test_open_database();
+diamon_test('a second first-use does not replace the keypair the browsers already know', function () {
+    $db = diamon_test_open_database();
 
     // Two requests find the columns empty at the same moment and each
     // generates a pair. Whichever writes first is the one a browser may
@@ -339,8 +339,8 @@ wallos_test('a second first-use does not replace the keypair the browsers alread
     $db->close();
 });
 
-wallos_test('an installation with no keypair yet still gets one', function () {
-    $db = wallos_test_open_database();
+diamon_test('an installation with no keypair yet still gets one', function () {
+    $db = diamon_test_open_database();
 
     $keys = webpush_get_vapid_keys($db);
     assert_true($keys !== false, 'the first use generates and stores a pair');

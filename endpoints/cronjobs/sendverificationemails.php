@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../includes/instance_config.php';
 
 // The admin row with anything the deployment owns applied over it, so this job
 // uses the same mail server the admin page shows.
-$admin = wallos_get_admin_settings($db);
+$admin = diamon_get_admin_settings($db);
 
 if ($admin['require_email_verification'] == 0) {
     if (php_sapi_name() !== 'cli') {
@@ -36,7 +36,7 @@ if ($rows) {
         $smtpPort = $admin['smtp_port'];
         $smtpUsername = $admin['smtp_username'];
         $smtpPassword = $admin['smtp_password'];
-        $fromEmail = empty($admin['from_email']) ? 'wallos@wallosapp.com' : $admin['from_email'];
+        $fromEmail = empty($admin['from_email']) ? 'noreply@diamon.localhost' : $admin['from_email'];
         $encryption = $admin['encryption'];
         $server_url = $admin['server_url'];
         $smtpAuth = (isset($admin["smtp_username"]) && $admin["smtp_username"] != "") || (isset($admin["smtp_password"]) && $admin["smtp_password"] != "");
@@ -64,10 +64,10 @@ if ($rows) {
             foreach ($rows as $user) {
                 $mail->addAddress($user['email']);
                 $mail->isHTML(true);
-                $mail->Subject = 'Wallos - Email Verification';
-                $mail->Body = '<img src="' . $server_url . '/images/siteicons/wallos.png" alt="Logo" />
+                $mail->Subject = 'Diamon - Email Verification';
+                $mail->Body = '<img src="' . $server_url . '/images/siteicons/diamon.png" alt="Diamon" width="215" height="82" />
                     <br>
-                    Registration on Wallos was successful.
+                    Registration on Diamon was successful.
                     <br>
                     Please click the following link to verify your email: <a href="' . $server_url . '/verifyemail.php?email=' . $user['email'] . '&token=' . $user['token'] . '">Verify Email</a>';
 

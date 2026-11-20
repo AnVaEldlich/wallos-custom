@@ -36,7 +36,7 @@ if ($apiKey === '') {
 
 // Cache successful responses: repeat searches shouldn't burn SerpAPI quota (100/month free)
 $cacheFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR
-    . 'wallos-logo-search-google-' . md5(strtolower(trim($_GET['search']))) . '.json';
+    . 'diamon-logo-search-google-' . md5(strtolower(trim($_GET['search']))) . '.json';
 if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < 86400) {
     echo file_get_contents($cacheFile);
     exit;
@@ -54,7 +54,7 @@ $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, 'https://serpapi.com/search.json?' . $query);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-curl_setopt($ch, CURLOPT_USERAGENT, 'Wallos');
+curl_setopt($ch, CURLOPT_USERAGENT, 'Diamon');
 $response = curl_exec($ch);
 $status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
 unset($ch);

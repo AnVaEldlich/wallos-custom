@@ -27,7 +27,7 @@ function showSubscriptionDetails(event, id) {
     });
 }
 
-// Wallos language codes (zh_cn, pt_br, sr_lat) are not BCP 47 tags, which Intl rejects
+// Diamon language codes (zh_cn, pt_br, sr_lat) are not BCP 47 tags, which Intl rejects
 function detailsLocale() {
   return (window.lang || 'en').replace('sr_lat', 'sr-Latn').replace(/_/g, '-');
 }
@@ -62,6 +62,32 @@ function detailsFormatDate(dateString) {
   }
 }
 
+function detailsFormatDateTime(timestamp) {
+  const date = new Date(Number(timestamp) * 1000);
+  if (isNaN(date)) {
+    return "";
+  }
+  const options = { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+  try {
+    return date.toLocaleString(detailsLocale(), options);
+  } catch (e) {
+    return date.toLocaleString('en', options);
+  }
+}
+
+function setDetailsItem(itemSelector, valueSelector, text) {
+  const item = document.querySelector(itemSelector);
+  if (!item) {
+    return;
+  }
+  if (!text) {
+    item.classList.add('hide');
+    return;
+  }
+  item.classList.remove('hide');
+  document.querySelector(valueSelector).textContent = text;
+}
+
 function detailsBillingCycleText(cycle, frequency) {
   const units = window.subscriptionLookups.cycles[cycle];
   if (!units) {
@@ -92,6 +118,72 @@ function detailsAddChip(container, text, style) {
   container.appendChild(chip);
 }
 
+function subscriptionHasUploadedLogo(subscription) {
+  return !!(subscription.logo && String(subscription.logo).trim());
+}
+
+function resolveSubscriptionCatalogLogoUrl(subscription) {
+  if (subscription.catalog_logo_url) {
+    return subscription.catalog_logo_url;
+  }
+
+  const catalog = window.providerCatalog || [];
+  let catalogId = (subscription.provider_catalog_id || "").trim();
+
+  if (!catalogId && subscription.name) {
+    const normalizedName = subscription.name.trim().toLowerCase();
+    const matched = catalog.find((provider) => {
+      if (provider.name.toLowerCase() === normalizedName) {
+        return true;
+      }
+      return (provider.search_terms || []).some(
+        (term) => String(term).toLowerCase() === normalizedName
+      );
+    });
+    catalogId = matched ? matched.id : "";
+  }
+
+  if (!catalogId) {
+    return null;
+  }
+
+  const entry = catalog.find((provider) => provider.id === catalogId);
+  if (!entry || !entry.logo_slug) {
+    return null;
+  }
+
+  const slug = String(entry.logo_slug).replace(/[^a-zA-Z0-9._-]/g, "");
+  if (slug === "" || slug.includes("..") || slug.startsWith(".") || slug.startsWith("-")) {
+    return null;
+  }
+
+  return `https://cdn.jsdelivr.net/gh/selfhst/icons/png/${slug}.png`;
+}
+
+function appendDetailsLogoFallback(logoContainer, subscription) {
+  const fallback = document.createElement('span');
+  fallback.className = 'details-logo-fallback';
+  fallback.textContent = (subscription.name || "?").charAt(0).toUpperCase();
+  logoContainer.appendChild(fallback);
+}
+
+function appendDetailsCatalogLogo(logoContainer, subscription) {
+  const catalogLogoUrl = resolveSubscriptionCatalogLogoUrl(subscription);
+  if (!catalogLogoUrl) {
+    return false;
+  }
+  const img = document.createElement('img');
+  img.src = catalogLogoUrl;
+  img.alt = "";
+  img.className = "details-catalog-logo";
+  img.onerror = function () {
+    logoContainer.innerHTML = "";
+    appendDetailsLogoFallback(logoContainer, subscription);
+  };
+  logoContainer.appendChild(img);
+  return true;
+}
+
 function renderSubscriptionDetails(subscription) {
   const lookups = window.subscriptionLookups;
   const strings = lookups.i18n;
@@ -99,7 +191,13 @@ function renderSubscriptionDetails(subscription) {
 
   const logoContainer = document.querySelector('#details-logo');
   logoContainer.innerHTML = "";
-  if (subscription.logo) {
+
+  // Catalogue providers always show the catalogue icon in the details modal.
+  // Older rows (e.g. Netflix) may have provider_catalog_id but no uploaded file;
+  // preferring the catalogue avoids the initials fallback and broken local paths.
+  if (appendDetailsCatalogLogo(logoContainer, subscription)) {
+    // Catalogue icon rendered.
+  } else if (subscriptionHasUploadedLogo(subscription)) {
     // When a themed variant exists, render both images; CSS (see
     // .logo-theme-original/.logo-theme-variant in styles.css) shows only the
     // one matching the current theme, so it updates instantly even if the
@@ -124,13 +222,14 @@ function renderSubscriptionDetails(subscription) {
       const img = document.createElement('img');
       img.src = "images/uploads/logos/" + subscription.logo;
       img.alt = "";
+      img.onerror = function () {
+        logoContainer.innerHTML = "";
+        appendDetailsLogoFallback(logoContainer, subscription);
+      };
       logoContainer.appendChild(img);
     }
   } else {
-    const fallback = document.createElement('span');
-    fallback.className = 'details-logo-fallback';
-    fallback.textContent = (subscription.name || "?").charAt(0).toUpperCase();
-    logoContainer.appendChild(fallback);
+    appendDetailsLogoFallback(logoContainer, subscription);
   }
 
   document.querySelector('#details-name').textContent = subscription.name;
@@ -160,6 +259,22 @@ function renderSubscriptionDetails(subscription) {
     progressTrack.classList.remove('hide');
     document.querySelector('#details-progress').style.width = progress + "%";
   }
+
+  const usage = subscription.usage || {};
+  document.querySelector('#details-usage').textContent = usage.total_label || strings.usage_none;
+  const breakdowns = [
+    ['#details-usage-measured-item', '#details-usage-measured', usage.measured_label],
+    ['#details-usage-estimated-item', '#details-usage-estimated', usage.estimated_label],
+    ['#details-usage-manual-item', '#details-usage-manual', usage.manual_label],
+  ];
+  const filledBreakdowns = breakdowns.filter(function (row) { return row[2]; });
+  const showBreakdown = filledBreakdowns.length > 1
+    || (filledBreakdowns.length === 1 && filledBreakdowns[0][2] !== usage.total_label);
+  breakdowns.forEach(function (row) {
+    setDetailsItem(row[0], row[1], showBreakdown ? row[2] : '');
+  });
+  setDetailsItem('#details-usage-last-item', '#details-usage-last', usage.last_used ? detailsFormatDateTime(usage.last_used) : '');
+  setDetailsItem('#details-usage-device-item', '#details-usage-device', usage.device || '');
 
   document.querySelector('#details-next-payment').textContent = detailsFormatDate(subscription.next_payment);
   document.querySelector('#details-start-date').textContent = detailsFormatDate(subscription.start_date) || strings.none;
@@ -227,6 +342,11 @@ function renderSubscriptionDetails(subscription) {
     urlButton.classList.add('hide');
   }
 
+  document.querySelector('#details-edit-button').onclick = function (event) {
+    event.stopPropagation();
+    openDetailsEditor(event, subscription.id);
+  };
+
   document.querySelector('#details-export-button').onclick = function () {
     exportCalendar(subscription.id);
   };
@@ -234,6 +354,15 @@ function renderSubscriptionDetails(subscription) {
   document.querySelector('#subscription-details').classList.add('is-open');
   document.querySelector('#details-backdrop').classList.add('is-open');
   document.body.classList.add('details-open');
+}
+
+function openDetailsEditor(event, id) {
+  closeSubscriptionDetails();
+  if (typeof openEditSubscription === "function" && document.getElementById("subscription-form")) {
+    openEditSubscription(event, id);
+    return;
+  }
+  window.location.href = "subscriptions.php?edit=" + encodeURIComponent(id);
 }
 
 function closeSubscriptionDetails() {

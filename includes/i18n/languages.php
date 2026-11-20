@@ -42,7 +42,7 @@ $langname_corrections = [
  * Turns any language value into one of the keys of $languages above.
  *
  * The keys are file names - "pt_br", "zh_cn", "sr_lat" - and everything that
- * hands Wallos a language hands it a BCP-47 tag instead: browsers send "de-DE"
+ * hands Diamon a language hands it a BCP-47 tag instead: browsers send "de-DE"
  * in Accept-Language, identity providers send "pt-BR" in the standard OIDC
  * "locale" claim. Matching those against the keys directly fails, and the
  * failure is silent - the account is simply English, and the person it happened

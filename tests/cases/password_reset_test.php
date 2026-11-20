@@ -20,10 +20,10 @@
  */
 function password_reset_source()
 {
-    return file_get_contents(WALLOS_ROOT . '/passwordreset.php');
+    return file_get_contents(DIAMON_ROOT . '/passwordreset.php');
 }
 
-wallos_test('issuing a token is one transaction', function () {
+diamon_test('issuing a token is one transaction', function () {
     $source = password_reset_source();
 
     assert_contains("'BEGIN'", $source, 'the token swap opens a transaction');
@@ -31,7 +31,7 @@ wallos_test('issuing a token is one transaction', function () {
     assert_contains("'ROLLBACK'", $source, 'and rolls back when a write fails');
 });
 
-wallos_test('no write in the file is discarded', function () {
+diamon_test('no write in the file is discarded', function () {
     // Both halves had the same shape, so the guard covers the whole file
     // rather than one block: a third write added later is caught too.
     $lines = preg_split('/\R/', password_reset_source());
@@ -48,7 +48,7 @@ wallos_test('no write in the file is discarded', function () {
         . 'one: ' . implode(', ', $discarded) . ')');
 });
 
-wallos_test('an unknown address is answered exactly like a known one', function () {
+diamon_test('an unknown address is answered exactly like a known one', function () {
     // Deliberate, and the reason the success message cannot simply become
     // conditional on everything: answering differently for a registered and an
     // unregistered address turns this form into an account enumeration oracle.
@@ -60,12 +60,12 @@ wallos_test('an unknown address is answered exactly like a known one', function 
         . 'down where the next edit will see it');
 });
 
-wallos_test('a rolled back token swap leaves the previous token in place', function () {
+diamon_test('a rolled back token swap leaves the previous token in place', function () {
     // The guarantee the fix rests on, against the real schema: if the rollback
     // did not restore the deleted row, the failure it exists for would still
     // leave the account with nothing.
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $stmt = $db->prepare('INSERT INTO password_resets (user_id, email, token)
                           VALUES (1, :email, :token)');

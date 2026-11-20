@@ -1667,10 +1667,75 @@ $upcomingPaymentsLimit = normalize_upcoming_payments_limit($settings['upcoming_p
 
     <section class="account-section">
         <header>
+            <h2><?= translate('usage', $i18n) ?></h2>
+        </header>
+        <div class="account-settings-list">
+            <p class="settings-notes">
+                <i class="fa-solid fa-circle-info"></i>
+                <?= translate('usage_extension_info', $i18n) ?>
+            </p>
+            <h3><?= translate('usage_dns', $i18n) ?></h3>
+            <p class="settings-notes">
+                <i class="fa-solid fa-circle-info"></i>
+                <?= translate('usage_dns_info', $i18n) ?>
+            </p>
+            <div class="form-group-inline">
+                <input type="checkbox" id="usagednsenabled" <?= !empty($settings['usage_dns_enabled']) ? 'checked' : '' ?>>
+                <label for="usagednsenabled"><?= translate('enabled', $i18n) ?></label>
+            </div>
+            <div class="form-group">
+                <label for="usagednsprovider"><?= translate('provider', $i18n) ?>:</label>
+                <select id="usagednsprovider">
+                    <option value="pihole" <?= ($settings['usage_dns_provider'] ?? '') !== 'adguard' ? 'selected' : '' ?>>Pi-hole</option>
+                    <option value="adguard" <?= ($settings['usage_dns_provider'] ?? '') === 'adguard' ? 'selected' : '' ?>>AdGuard Home</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="usagednsurl"><?= translate('usage_dns_url', $i18n) ?>:</label>
+                <input type="url" id="usagednsurl" value="<?= htmlspecialchars($settings['usage_dns_url'] ?? '') ?>" placeholder="http://192.168.1.2">
+            </div>
+            <div class="form-group">
+                <label for="usagednstoken"><?= translate('usage_dns_token', $i18n) ?>:</label>
+                <input type="password" id="usagednstoken" value="<?= htmlspecialchars($settings['usage_dns_token'] ?? '') ?>" autocomplete="off">
+            </div>
+            <div class="buttons">
+                <input type="button" class="thin" value="<?= translate('save', $i18n) ?>" onClick="saveUsageDns()">
+            </div>
+        </div>
+    </section>
+
+    <section class="account-section">
+        <header>
             <h2><?= translate('display_settings', $i18n) ?></h2>
         </header>
         <div class="account-settings-list">
             <h3><?= translate('price', $i18n) ?></h3>
+            <div>
+                <div class="form-group">
+                    <label for="displaycurrency"><?= translate('subscription_display_currency', $i18n) ?>:</label>
+                    <select id="displaycurrency" name="displaycurrency" onChange="setDisplayCurrency()">
+                        <option value="0" <?= (int) ($settings['display_currency_id'] ?? 0) === 0 ? 'selected' : '' ?>>
+                            <?= translate('subscription_display_currency_original', $i18n) ?>
+                        </option>
+                        <?php
+                        foreach ($currencies as $currency) {
+                            $selected = (int) ($settings['display_currency_id'] ?? 0) === (int) $currency['id'] ? 'selected' : '';
+                            ?>
+                            <option value="<?= (int) $currency['id'] ?>" <?= $selected ?>>
+                                <?= htmlspecialchars($currency['name']) ?> (<?= htmlspecialchars($currency['code']) ?>)
+                            </option>
+                            <?php
+                        }
+                        ?>
+                    </select>
+                    <div class="settings-notes">
+                        <p>
+                            <i class="fa-solid fa-circle-info"></i>
+                            <?= translate('subscription_display_currency_info', $i18n) ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
             <div>
                 <div class="form-group-inline">
                     <input type="checkbox" id="monthlyprice" name="monthlyprice" onChange="setShowMonthlyPrice()" <?php if ($settings['monthly_price'])
@@ -1709,6 +1774,32 @@ $upcomingPaymentsLimit = normalize_upcoming_payments_limit($settings['upcoming_p
                 </div>
             </div>
             <h3><?= translate('experience', $i18n) ?></h3>
+            <div>
+                <div class="form-group">
+                    <label for="preferred_language"><?= translate('language', $i18n) ?>:</label>
+                    <div class="form-group-inline">
+                        <select id="preferred_language" name="preferred_language">
+                            <?php
+                            $preferredLanguage = resolve_language($userData['language'] ?? $lang);
+                            foreach ($languages as $code => $language) {
+                                $selected = ($code === $preferredLanguage) ? 'selected' : '';
+                                ?>
+                                <option value="<?= $code ?>" <?= $selected ?>><?= $language['name'] ?></option>
+                                <?php
+                            }
+                            ?>
+                        </select>
+                        <input type="submit" class="thin" value="<?= translate('save', $i18n) ?>" id="savePreferredLanguage"
+                            onClick="savePreferredLanguage()" />
+                    </div>
+                    <div class="settings-notes">
+                        <p>
+                            <i class="fa-solid fa-circle-info"></i>
+                            <?= translate('language_preference_info', $i18n) ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
             <div>
                 <div class="form-group-inline">
                     <input type="checkbox" id="mobilenavigation" name="mobilenavigation"

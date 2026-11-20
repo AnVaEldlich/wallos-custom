@@ -87,7 +87,7 @@ if (isset($updates[$action])) {
 
     // Subscription ids can be reused by SQLite, so the payer and category rows
     // of a deleted subscription must not be left behind for the next one.
-    foreach (['subscription_payers', 'subscription_categories'] as $table) {
+    foreach (['subscription_payers', 'subscription_categories', 'subscription_usage_sessions', 'usage_prompt_dismissals'] as $table) {
         $stmt = $db->prepare("DELETE FROM $table WHERE subscription_id IN (SELECT id FROM subscriptions WHERE id IN ($idList) AND user_id = :userId)");
         $stmt->bindValue(':userId', $userId, SQLITE3_INTEGER);
         $stmt->execute();

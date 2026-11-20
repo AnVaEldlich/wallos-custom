@@ -21,8 +21,8 @@ if ($theme === 'automatic') {
 $themeColor = $theme === 'light' ? '#FFFFFF' : '#12151C';
 
 $manifest = [
-    'short_name' => 'Wallos',
-    'name' => 'Wallos - Subscription Tracker',
+    'short_name' => 'Diamon',
+    'name' => 'Diamon - Subscription Tracker',
     'icons' => [
         [
             'src' => 'images/icon/android-chrome-192x192.png',
@@ -48,6 +48,8 @@ $manifest = [
         ],
     ],
     'start_url' => '/',
+    // Kept from before the rename to Diamon: browsers identify an installed PWA
+    // by this id, so changing it would orphan every existing installation.
     'id' => 'com.wallos.app',
     'shortcuts' => [
         [
@@ -98,7 +100,7 @@ $manifest = [
         [
             'name' => 'About',
             'short_name' => 'About',
-            'description' => 'More info about Wallos',
+            'description' => 'More info about Diamon',
             'url' => 'about.php',
             'icons' => [
                 ['src' => 'images/siteicons/pwa/about.png', 'type' => 'image/png', 'sizes' => '96x96'],
@@ -122,7 +124,7 @@ $manifest = [
     'display' => 'standalone',
     'scope' => '/',
     'theme_color' => $themeColor,
-    'description' => 'Wallos is a personal subscription tracker that helps you keep track of your subscriptions and save money.',
+    'description' => 'Diamon is a personal subscription tracker that helps you keep track of your subscriptions and save money.',
     'orientation' => 'portrait-primary',
     'display_override' => ['window-controls-overlay'],
 ];

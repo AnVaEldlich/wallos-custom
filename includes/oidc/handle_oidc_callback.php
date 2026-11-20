@@ -14,7 +14,7 @@ function generate_username_from_email($email)
 
 require_once __DIR__ . '/../ssrf_helper.php';
 
-$oidcConfiguration = wallos_get_effective_oidc_configuration($db);
+$oidcConfiguration = diamon_get_effective_oidc_configuration($db);
 if ($oidcConfiguration['enabled'] !== 1 || !$oidcConfiguration['is_configured']) {
     header("Location: login.php?error=oidc_user_not_found");
     exit();
@@ -54,8 +54,8 @@ curl_close($ch);
 $tokenData = $response !== false ? json_decode($response, true) : null;
 if (!$tokenData || !isset($tokenData['access_token'])) {
     $detail = $curlErrno ? $curlError : ('HTTP ' . $httpCode . ($response !== false ? ': ' . substr($response, 0, 500) : ''));
-    error_log('[Wallos OIDC] Token exchange failed for ' . $tokenUrlInfo['host'] . ': ' . $detail);
-    die("OIDC token exchange failed. Check the Wallos server logs for details.");
+    error_log('[Diamon OIDC] Token exchange failed for ' . $tokenUrlInfo['host'] . ': ' . $detail);
+    die("OIDC token exchange failed. Check the Diamon server logs for details.");
 }
 
 $userInfoUrl = $oidcSettings['user_info_url'];
@@ -81,8 +81,8 @@ curl_close($ch);
 $userInfo = $response !== false ? json_decode($response, true) : null;
 if (!$userInfo || !isset($userInfo[$oidcSettings['user_identifier_field']])) {
     $detail = $curlErrno ? $curlError : ('HTTP ' . $httpCode . ($response !== false ? ': ' . substr($response, 0, 500) : ''));
-    error_log('[Wallos OIDC] User info fetch failed for ' . $userInfoUrlInfo['host'] . ': ' . $detail);
-    die("Failed to fetch OIDC user info. Check the Wallos server logs for details.");
+    error_log('[Diamon OIDC] User info fetch failed for ' . $userInfoUrlInfo['host'] . ': ' . $detail);
+    die("Failed to fetch OIDC user info. Check the Diamon server logs for details.");
 }
 
 $oidcSub = $userInfo[$oidcSettings['user_identifier_field']];

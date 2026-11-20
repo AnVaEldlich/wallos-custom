@@ -1,7 +1,7 @@
 /db/*
 !/db/wallos.empty.db
 /images/uploads/logos/*
-!/images/uploads/logos/wallos.png
+!/images/uploads/logos/diamon.png
 .DS_Store
 .idea/
 .vscode/

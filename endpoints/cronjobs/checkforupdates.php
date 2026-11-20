@@ -5,11 +5,13 @@ require_once __DIR__ . '/../../includes/connect_endpoint_crontabs.php';
 
 $options = [
     'http' => [
-        'header' => "User-Agent: Wallos\r\n"
+        'header' => "User-Agent: Diamon\r\n"
     ]
 ];
 
-$repository = 'ellite/Wallos'; // Change this to your repository if you fork Wallos
+// Diamon follows the upstream Wallos releases; point this at your own repository
+// if you publish Diamon releases separately.
+$repository = 'ellite/Wallos';
 $url = "https://api.github.com/repos/$repository/releases/latest";
 
 $context = stream_context_create($options);

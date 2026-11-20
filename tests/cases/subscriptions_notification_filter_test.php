@@ -21,7 +21,7 @@
  */
 function notification_filter_condition($type)
 {
-    $source = file_get_contents(WALLOS_ROOT . '/endpoints/subscriptions/get.php');
+    $source = file_get_contents(DIAMON_ROOT . '/endpoints/subscriptions/get.php');
 
     if (!preg_match('/\$type === \'' . $type . '\'\) \{\s*(?:\/\/[^\n]*\n\s*)*\$notifConditions\[\] = "([^"]+)";/', $source, $matches)) {
         return '';
@@ -54,16 +54,16 @@ function notification_filter_names($db, $userId, $type)
     return $names;
 }
 
-wallos_test('the notification filter conditions were found in the endpoint', function () {
+diamon_test('the notification filter conditions were found in the endpoint', function () {
     assert_contains('cancellation_date', notification_filter_condition('cancellation'),
         'the cancellation condition still filters by cancellation date');
     assert_contains('cancellation_date', notification_filter_condition('none'),
         'the none condition still checks for a cancellation date');
 });
 
-wallos_test('the cancellation filter excludes one-time purchases', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('the cancellation filter excludes one-time purchases', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $rows = [
         // name,             cycle, notify, cancellation_date
@@ -77,7 +77,7 @@ wallos_test('the cancellation filter excludes one-time purchases', function () {
                           VALUES (1, :name, 9.99, :currencyId, :nextPayment, :cycle, 1, 0, :notify, :cancellationDate)');
     foreach ($rows as [$name, $cycle, $notify, $cancellationDate]) {
         $stmt->bindValue(':name', $name, SQLITE3_TEXT);
-        $stmt->bindValue(':currencyId', wallos_test_currency_id(1, 0), SQLITE3_INTEGER);
+        $stmt->bindValue(':currencyId', diamon_test_currency_id(1, 0), SQLITE3_INTEGER);
         $stmt->bindValue(':nextPayment', date('Y-m-d', strtotime('+5 days')), SQLITE3_TEXT);
         $stmt->bindValue(':cycle', $cycle, SQLITE3_INTEGER);
         $stmt->bindValue(':notify', $notify, SQLITE3_INTEGER);

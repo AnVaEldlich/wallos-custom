@@ -49,7 +49,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
         $email['encryption'] = $row["encryption"];
         $email['smtpUsername'] = $row["smtp_username"];
         $email['smtpPassword'] = $row["smtp_password"];
-        $email['fromEmail'] = $row["from_email"] ? $row["from_email"] : "wallos@wallosapp.com";
+        $email['fromEmail'] = $row["from_email"] ? $row["from_email"] : "noreply@diamon.localhost";
         $email['otherEmails'] = $row["other_emails"];
     }
 
@@ -284,7 +284,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                         $emailaddress = !empty($user['email']) ? $user['email'] : $defaultEmail;
                         $name = !empty($user['name']) ? $user['name'] : $defaultName;
 
-                        $mail->setFrom($email['fromEmail'], 'Wallos App');
+                        $mail->setFrom($email['fromEmail'], 'Diamon');
                         $mail->addAddress($emailaddress, $name);
 
                         if (!empty($email['otherEmails'])) {
@@ -301,7 +301,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                             }
                         }
 
-                        $mail->Subject = 'Wallos Cancellation Notification';
+                        $mail->Subject = 'Diamon Cancellation Notification';
                         $mail->Body = $message;
 
                         if ($mail->send()) {
@@ -326,7 +326,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                         $result = $stmt->execute();
                         $user = $result->fetchArray(SQLITE3_ASSOC);
 
-                        $title = translate('wallos_notification', $i18n);
+                        $title = translate('diamon_notification', $i18n);
 
                         if ($user['name']) {
                             $message = $user['name'] . ", the following subscriptions are up for cancellation:\n";

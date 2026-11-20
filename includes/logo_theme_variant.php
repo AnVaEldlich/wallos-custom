@@ -18,6 +18,7 @@ const LOGO_THEME_WHITE_LIGHTNESS_MIN = 200;  // 0-255; at/above this is "near wh
 const LOGO_THEME_MAX_CHANNEL_SPREAD = 20;    // max(r,g,b) - min(r,g,b); low spread = grayscale-ish
 const LOGO_THEME_SIGNIFICANT_RATIO = 0.05;   // at least 5% of opaque pixels to count as "has text"
 const LOGO_THEME_DOMINANCE_RATIO = 0.3;      // if both black & white are present, min/max above this = genuinely ambiguous
+const LOGO_THEME_COLORED_BACKGROUND_RATIO = 0.4; // colored pixels at/above this share = an icon with its own background
 
 /**
  * Classifies a logo's ink color by sampling its opaque pixels.
@@ -34,6 +35,7 @@ function classifyLogoTextColor($image)
 
     $blackPixels = 0;
     $whitePixels = 0;
+    $coloredPixels = 0;
     $opaquePixels = 0;
 
     for ($y = 0; $y < $height; $y++) {
@@ -52,6 +54,7 @@ function classifyLogoTextColor($image)
 
             $spread = max($red, $green, $blue) - min($red, $green, $blue);
             if ($spread > LOGO_THEME_MAX_CHANNEL_SPREAD) {
+                $coloredPixels++;
                 continue; // saturated/colored pixel: part of an icon mark, leave alone
             }
 
@@ -65,6 +68,15 @@ function classifyLogoTextColor($image)
     }
 
     if ($opaquePixels === 0) {
+        return null;
+    }
+
+    // An icon that brings its own colored background (Duolingo's green owl,
+    // Xbox Game Pass's green tile) reads well on either theme. Its white or
+    // black details sit on that background, not on the page, so they are not
+    // "ink" -- inverting them would, for example, turn the owl's white eyes
+    // black.
+    if (($coloredPixels / $opaquePixels) >= LOGO_THEME_COLORED_BACKGROUND_RATIO) {
         return null;
     }
 

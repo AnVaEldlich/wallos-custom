@@ -1,18 +1,19 @@
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./images/siteicons/walloswhite.png">
-    <source media="(prefers-color-scheme: light)" srcset="./images/siteicons/wallos.png">
-    <img alt="Wallos" src="./images/siteicons/wallos.png">
+    <source media="(prefers-color-scheme: dark)" srcset="./images/siteicons/diamonwhite.svg">
+    <source media="(prefers-color-scheme: light)" srcset="./images/siteicons/diamon.svg">
+    <img alt="Diamon" src="./images/siteicons/diamon.svg" width="430">
   </picture>
 
-  <p>Wallos: Open-Source Personal Subscription Tracker</p>
+  <p>Diamon: Open-Source Personal Subscription Tracker</p>
 
-  [![Stars](https://img.shields.io/github/stars/ellite/Wallos?style=flat-square)](https://github.com/ellite/Wallos)
-  [![Docker](https://img.shields.io/docker/pulls/bellamy/wallos?style=flat-square)](https://hub.docker.com/r/bellamy/wallos)
-  [![GitHub contributors](https://img.shields.io/github/contributors/ellite/Wallos?style=flat-square)](https://github.com/ellite/Wallos/graphs/contributors)
-  [![GitHub Sponsors](https://img.shields.io/github/sponsors/ellite?style=flat-square)](https://github.com/sponsors/ellite)
-  [![Discord](https://img.shields.io/discord/1237073478910214235?logo=discord&style=flat-square)](https://discord.gg/anex9GUrPW)
+  [![Based on Wallos](https://img.shields.io/badge/based%20on-Wallos-2858C5?style=flat-square)](https://github.com/ellite/Wallos)
+  [![License: GPL v3](https://img.shields.io/badge/license-GPLv3-8EBEF9?style=flat-square)](LICENSE.md)
 </div>
+
+> Diamon is a customised fork of [Wallos](https://github.com/ellite/Wallos), the open-source subscription tracker
+> created by [Henrique (ellite)](https://henrique.pt) and its contributors. It is distributed under the same
+> GNU GPLv3 licence. All credit for the original application goes to the Wallos project - see [Credits](#credits).
 
 
 ## Table of Contents
@@ -34,35 +35,36 @@
 - [OIDC](#oidc)
 - [API Documentation](#api-documentation)
 - [Contributing](#contributing)
-  - [Contributors](#contributors)
+  - [Upstream contributors](#upstream-contributors)
   - [Translations](#translations)
 - [License](#license)
+- [Credits](#credits)
 - [Links](#links)
 
 ## Introduction
 
-Wallos is a powerful, open-source, and self-hostable web application designed to empower you in managing your finances with ease. Say goodbye to complicated spreadsheets and expensive financial software – Wallos simplifies the process of tracking expenses and helps you gain better control over your financial life.
+Diamon is a powerful, open-source, and self-hostable web application designed to empower you in managing your finances with ease. Say goodbye to complicated spreadsheets and expensive financial software – Diamon simplifies the process of tracking expenses and helps you gain better control over your financial life.
 
 ## Features
 
 - Subscription Management: Keep track of your recurring subscriptions and payments, ensuring you never miss a due date.
 - Category Management: Organize your expenses into customizable categories, enabling you to gain insights into your spending habits.
-- Multi-Currency support: Wallos supports multiple currencies, allowing you to manage your finances in the currency of your choice.
+- Multi-Currency support: Diamon supports multiple currencies, allowing you to manage your finances in the currency of your choice.
 - Currency Conversion: Integrates with the Fixer API so you can get exchange rates and see all your subscriptions on your main currency.
-- Data Privacy: As a self-hosted application, Wallos ensures that your financial data remains private and secure on your own server.
-- Customization: Tailor Wallos to your needs with customizable categories, currencies, themes and other display options.
+- Data Privacy: As a self-hosted application, Diamon ensures that your financial data remains private and secure on your own server.
+- Customization: Tailor Diamon to your needs with customizable categories, currencies, themes and other display options.
 - Sorting Options: Allowing you to view your subscriptions from different perspectives.
-- Logo Search: Wallos can search the web for the logo of your subscriptions if you don't have them available for upload.
-- Mobile view: Wallos on the go.
+- Logo Search: Diamon can search the web for the logo of your subscriptions if you don't have them available for upload.
+- Mobile view: Diamon on the go.
 - Statistics: Another perspective into your spendings.
-- Notifications:  Wallos supports multiple notification methods (email, discord, pushover, telegram, gotify and webhooks). Get notified about your upcoming payments.
+- Notifications:  Diamon supports multiple notification methods (email, discord, pushover, telegram, gotify and webhooks). Get notified about your upcoming payments.
 - Multi Language support.
 - OIDC with OAuth
 - AI Recommendations with ChatGPT, Gemini or Local Ollama
 
 ## Demo
 
-If you want to try Wallos, a demo is available at [https://demo.wallosapp.com](https://demo.wallosapp.com).  
+Diamon has no public demo of its own. The upstream Wallos demo, which shows the application Diamon is built on, is available at [https://demo.wallosapp.com](https://demo.wallosapp.com).  
 The database is reset every 2 hours.  
 To access the demo use the following credentials:
 
@@ -73,7 +75,7 @@ Password: demo
 
 ## Getting Started
 
-See instructions to run Wallos below.
+See instructions to run Diamon below.
 
 ### Prerequisites
 
@@ -100,7 +102,7 @@ See instructions to run Wallos below.
 #### Baremetal
 
 1. Download or clone this repo and move the files into your web root - usually `/var/www/html`
-2. Rename `/db/wallos.empty.db` to `/db/wallos.db`
+2. Rename `/db/wallos.empty.db` to `/db/wallos.db` (the database file keeps its upstream name so existing installations and backups keep working)
 3. Open the app in your browser — migrations run automatically on the registration page
 4. Add the following scripts to your cronjobs with `crontab -e`
 
@@ -130,30 +132,39 @@ php /var/www/html/endpoints/db/migrate.php
 
 #### Docker
 
+Diamon is not published to a public registry. Build the image from this repository first:
+
 ```bash
-docker run -d --name wallos -v /path/to/config/wallos/db:/var/www/html/db \
--v /path/to/config/wallos/logos:/var/www/html/images/uploads/logos \
+docker build -t diamon:latest .
+```
+
+Then run it:
+
+```bash
+docker run -d --name diamon -v /path/to/config/diamon/db:/var/www/html/db \
+-v /path/to/config/diamon/logos:/var/www/html/images/uploads/logos \
 -e TZ=Europe/Berlin -p 8282:80 --restart unless-stopped \
-bellamy/wallos:latest
+diamon:latest
 ```
 
 Disable healthcheck (optional, e.g., for Docker <25 or faster startup reporting):
 
 ```bash
-docker run -d --name wallos -v /path/to/config/wallos/db:/var/www/html/db \
--v /path/to/config/wallos/logos:/var/www/html/images/uploads/logos \
+docker run -d --name diamon -v /path/to/config/diamon/db:/var/www/html/db \
+-v /path/to/config/diamon/logos:/var/www/html/images/uploads/logos \
 -e TZ=Europe/Berlin -p 8282:80 --restart unless-stopped \
 --health-cmd=NONE \
-bellamy/wallos:latest
+diamon:latest
 ```
 
 ### Docker Compose
 
 ```
 services:
-  wallos:
-    container_name: wallos
-    image: bellamy/wallos:latest
+  diamon:
+    container_name: diamon
+    build: .
+    image: diamon:latest
     ports:
       - "8282:80/tcp"
     environment:
@@ -169,9 +180,10 @@ Disable healthcheck (optional, e.g., for Docker <25 or faster startup reporting)
 
 ```
 services:
-  wallos:
-    container_name: wallos
-    image: bellamy/wallos:latest
+  diamon:
+    container_name: diamon
+    build: .
+    image: diamon:latest
     ports:
       - "8282:80/tcp"
     environment:
@@ -184,49 +196,63 @@ services:
       test: ["NONE"]
 ```
 
+### Upgrading an existing Wallos installation
+
+Diamon reads the same database (`db/wallos.db`), the same volumes (`/var/www/html/db` and
+`/var/www/html/images/uploads/logos`) and the same backups as Wallos, so no data migration is needed.
+Things that were renamed keep accepting their old name:
+
+- Environment variables `WALLOS_SMTP_*` and `WALLOS_SERVER_URL` are still read when the new
+  `DIAMON_SMTP_*` / `DIAMON_SERVER_URL` variables are not set.
+- Existing "remember me" sessions (`wallos_login` cookie) stay signed in and are moved to the new cookie.
+- The browser extension picks up the server address saved by earlier versions.
+
+If you run the bundled `docker-compose.yaml`, the service and container are now called `diamon`; recreate
+them once with `docker compose up -d --build --remove-orphans` so the old `wallos` container is replaced.
+
 ## Usage
 
-Just open the browser and open `ip:port` of the machine running wallos.  
-On the first time you run wallos a user account must be created.  
+Just open the browser and open `ip:port` of the machine running Diamon.  
+On the first time you run Diamon a user account must be created.  
 Go to settings and personalise your Avatar and add members of your household. While there add / remove any categories and currencies.  
 Get a free API Key from [Fixer](https://fixer.io/#pricing_plan) and add it in the settings.  
 If you want to trigger an Update of the exchange rates, change your main currency after adding the API Key, and then change it back to your preferred one.  
 
 ## Screenshots
 
-![Screenshot](screenshots/wallos-subscriptions-light.png)
+![Screenshot](screenshots/diamon-subscriptions-light.png)
 
 <details>
 <summary>See more screenshots</summary>
 
-![Screenshot](screenshots/wallos-subscriptions-dark.png)
+![Screenshot](screenshots/diamon-subscriptions-dark.png)
 
-![Screenshot](screenshots/wallos-subscriptions-popup.png)
+![Screenshot](screenshots/diamon-subscriptions-popup.png)
 
-![Screenshot](screenshots/wallos-dashboard-light.png)
+![Screenshot](screenshots/diamon-dashboard-light.png)
 
-![Screenshot](screenshots/wallos-dashboard-dark.png)
+![Screenshot](screenshots/diamon-dashboard-dark.png)
 
-![Screenshot](screenshots/wallos-stats.png)
+![Screenshot](screenshots/diamon-stats.png)
 
-![Screenshot](screenshots/wallos-calendar.png)
+![Screenshot](screenshots/diamon-calendar.png)
 
-![Screenshot](screenshots/wallos-form.png)
+![Screenshot](screenshots/diamon-form.png)
 
-![Screenshot](screenshots/wallos-subscriptions-mobile-light.png) ![Screenshot](screenshots/wallos-subscriptions-mobile-dark.png)
+![Screenshot](screenshots/diamon-subscriptions-mobile-light.png) ![Screenshot](screenshots/diamon-subscriptions-mobile-dark.png)
 
-![Screenshot](screenshots/wallos-subscriptions-mobile-sheet.png)
+![Screenshot](screenshots/diamon-subscriptions-mobile-sheet.png)
 
-![Screenshot](screenshots/wallos-dashboard-mobile-light.png) ![Screenshot](screenshots/wallos-dashboard-mobile-dark.png)
+![Screenshot](screenshots/diamon-dashboard-mobile-light.png) ![Screenshot](screenshots/diamon-dashboard-mobile-dark.png)
 
 </details>
 
 ## OIDC
 
 OIDC can be enabled on the Admin page and can be used with providers that support OAuth.
-Wallos can also resolve OIDC settings declaratively from environment variables. When an `OIDC_*` variable is set, it overrides the corresponding database value at runtime without rewriting the database.
+Diamon can also resolve OIDC settings declaratively from environment variables. When an `OIDC_*` variable is set, it overrides the corresponding database value at runtime without rewriting the database.
 
-If `OIDC_ISSUER` is set, Wallos will fetch `/.well-known/openid-configuration` at runtime and use discovery for the authorization, token, and user info endpoints unless a more specific endpoint variable is also set.
+If `OIDC_ISSUER` is set, Diamon will fetch `/.well-known/openid-configuration` at runtime and use discovery for the authorization, token, and user info endpoints unless a more specific endpoint variable is also set.
 
 | Environment Variable | UI Equivalent |
 | --- | --- |
@@ -249,13 +275,13 @@ If `OIDC_ISSUER` is set, Wallos will fetch `/.well-known/openid-configuration` a
 
 ### SSRF allowlist
 
-Wallos blocks webhook, SMTP, and OIDC endpoint URLs that resolve to private/link-local/loopback addresses unless the host is present in the Security Settings allowlist. Normally that allowlist is edited through the Admin UI, which requires a manual login before OIDC can be used against an identity provider on a private address (e.g. a self-hosted IdP at `auth.example.com`).
+Diamon blocks webhook, SMTP, and OIDC endpoint URLs that resolve to private/link-local/loopback addresses unless the host is present in the Security Settings allowlist. Normally that allowlist is edited through the Admin UI, which requires a manual login before OIDC can be used against an identity provider on a private address (e.g. a self-hosted IdP at `auth.example.com`).
 
 Setting the `SSRF_ALLOWLIST` environment variable overrides the database value entirely (same full-override semantics as the `OIDC_*` variables above), so the allowlist can be provisioned on first boot with no manual UI step. It accepts a comma-separated list of hosts/IPs, optionally with a port (e.g. `SSRF_ALLOWLIST=auth.example.com,192.168.1.100:8123`). While set, the Security Settings field in the Admin UI is shown but disabled.
 
 ## API Documentation
 
-Wallos provides a comprehensive API that allows you to interact with the application programmatically. The API documentation is available at [https://api.wallosapp.com/](https://api.wallosapp.com/).
+Diamon provides a comprehensive API that allows you to interact with the application programmatically. Diamon keeps the Wallos API, so the upstream documentation at [https://api.wallosapp.com/](https://api.wallosapp.com/) applies.
 
 ## Contributing
 
@@ -263,7 +289,9 @@ Feel free to open Pull requests with bug fixes and features. I'll do my best to 
 Feel free to open issues with bug reports or feature requests. Bug fixes will take priority.  
 I welcome contributions from the community and look forward to working with you to improve this project.
 
-### Contributors
+### Upstream contributors
+
+Diamon builds on the work of everyone who contributed to Wallos:
 
 <a href="https://github.com/ellite/wallos/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=ellite/wallos" />
@@ -271,7 +299,7 @@ I welcome contributions from the community and look forward to working with you 
 
 ### Translations
 
-If you want to contribute with a translation of wallos:
+If you want to contribute with a translation of Diamon:
 - Add your language code to `includes/i18n/languages.php` in the format `"en" => ["name" => "English", "dir" => "ltr"],`. Please use the original language name and not the english translation.
 - Create a copy of the file `includes/i18n/en.php` and rename it to the language code you used above. Example: pt.php for "pt" => ["name" => "Português", "dir" => "ltr"],.
 - Translate all the values on the language file to the new language. (Incomplete translations will not be accepted).
@@ -288,8 +316,15 @@ I chose the GNU General Public License version 3 (GPLv3) for this project becaus
 
 I strongly believe in the importance of open source software and the collaborative nature of development, and I invite contributors to help improve this project.
 
+## Credits
+
+Diamon is derived from [Wallos](https://github.com/ellite/Wallos), copyright its author
+[Henrique (ellite)](https://henrique.pt) and the Wallos contributors, and is released under the
+[GNU General Public License v3](LICENSE.md) like the original. The history of the upstream project is kept in
+[CHANGELOG.md](CHANGELOG.md).
+
 ## Links
 
-- The author: [henrique.pt](https://henrique.pt)
-- Wallos Landingpage: [wallosapp.com](https://wallosapp.com)
-- Join the conversation: [Discord Server](https://discord.gg/anex9GUrPW)
+- Original Wallos project: [github.com/ellite/Wallos](https://github.com/ellite/Wallos)
+- Wallos author: [henrique.pt](https://henrique.pt)
+- Wallos landing page: [wallosapp.com](https://wallosapp.com)

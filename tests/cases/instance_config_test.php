@@ -2,7 +2,7 @@
 /*
   The instance SMTP and the public URL can come from the deployment.
 
-  Wallos keeps them in the admin table, entered through the admin page, and that
+  Diamon keeps them in the admin table, entered through the admin page, and that
   is still where they come from when nothing else says otherwise. What this adds
   is the layer above: an operator who runs this in a container can put the mail
   server in the compose file, where the port and the volume already are, and put
@@ -20,7 +20,7 @@
       which is the whole reason it was mounted rather than passed.
 */
 
-require_once WALLOS_ROOT . '/includes/instance_config.php';
+require_once DIAMON_ROOT . '/includes/instance_config.php';
 
 /**
  * Runs $body with the given environment, and puts the environment back.
@@ -76,23 +76,23 @@ function instance_config_store_smtp($db)
     $stmt->execute();
 }
 
-wallos_test('with no variables set, the stored settings are what comes back', function () {
+diamon_test('with no variables set, the stored settings are what comes back', function () {
     // The case that matters most, because it is every installation that has not
     // asked for any of this.
-    $db = wallos_test_open_database();
+    $db = diamon_test_open_database();
     instance_config_store_smtp($db);
 
     instance_config_with_env([
-        'WALLOS_SMTP_HOST' => null,
-        'WALLOS_SMTP_PORT' => null,
-        'WALLOS_SMTP_ENCRYPTION' => null,
-        'WALLOS_SMTP_USERNAME' => null,
-        'WALLOS_SMTP_PASSWORD' => null,
-        'WALLOS_SMTP_PASSWORD_FILE' => null,
-        'WALLOS_SMTP_FROM' => null,
-        'WALLOS_SERVER_URL' => null,
+        'DIAMON_SMTP_HOST' => null,
+        'DIAMON_SMTP_PORT' => null,
+        'DIAMON_SMTP_ENCRYPTION' => null,
+        'DIAMON_SMTP_USERNAME' => null,
+        'DIAMON_SMTP_PASSWORD' => null,
+        'DIAMON_SMTP_PASSWORD_FILE' => null,
+        'DIAMON_SMTP_FROM' => null,
+        'DIAMON_SERVER_URL' => null,
     ], function () use ($db) {
-        $configuration = wallos_get_effective_admin_configuration($db);
+        $configuration = diamon_get_effective_admin_configuration($db);
 
         assert_same('stored.example.com', $configuration['settings']['smtp_address'], 'the stored host');
         assert_same('stored-password', $configuration['settings']['smtp_password'], 'the stored password');
@@ -103,24 +103,24 @@ wallos_test('with no variables set, the stored settings are what comes back', fu
     $db->close();
 });
 
-wallos_test('a variable replaces the stored value and says which field it owns', function () {
-    $db = wallos_test_open_database();
+diamon_test('a variable replaces the stored value and says which field it owns', function () {
+    $db = diamon_test_open_database();
     instance_config_store_smtp($db);
 
     instance_config_with_env([
-        'WALLOS_SMTP_HOST' => 'mail.example.net',
-        'WALLOS_SMTP_PORT' => '2525',
-        'WALLOS_SMTP_ENCRYPTION' => 'ssl',
-        'WALLOS_SERVER_URL' => 'https://wallos.example.net',
+        'DIAMON_SMTP_HOST' => 'mail.example.net',
+        'DIAMON_SMTP_PORT' => '2525',
+        'DIAMON_SMTP_ENCRYPTION' => 'ssl',
+        'DIAMON_SERVER_URL' => 'https://diamon.example.net',
     ], function () use ($db) {
-        $configuration = wallos_get_effective_admin_configuration($db);
+        $configuration = diamon_get_effective_admin_configuration($db);
 
         assert_same('mail.example.net', $configuration['settings']['smtp_address'], 'the host comes from the environment');
         assert_same('2525', $configuration['settings']['smtp_port'], 'and the port');
         assert_same('ssl', $configuration['settings']['encryption'], 'and the encryption');
-        assert_same('https://wallos.example.net', $configuration['settings']['server_url'], 'and the public URL');
+        assert_same('https://diamon.example.net', $configuration['settings']['server_url'], 'and the public URL');
 
-        assert_same('WALLOS_SMTP_HOST', $configuration['managed_fields']['smtp_address'] ?? null,
+        assert_same('DIAMON_SMTP_HOST', $configuration['managed_fields']['smtp_address'] ?? null,
             'the field names the variable that owns it');
 
         // Untouched fields keep coming from the database, so an installation can
@@ -132,35 +132,35 @@ wallos_test('a variable replaces the stored value and says which field it owns',
     $db->close();
 });
 
-wallos_test('an empty variable is a typo rather than a configuration', function () {
+diamon_test('an empty variable is a typo rather than a configuration', function () {
     // Reading it as "the host is now nothing" would switch mail off and show
     // the field as managed and blank, which looks like the feature working.
-    $db = wallos_test_open_database();
+    $db = diamon_test_open_database();
     instance_config_store_smtp($db);
 
-    instance_config_with_env(['WALLOS_SMTP_HOST' => '   '], function () use ($db) {
-        $configuration = wallos_get_effective_admin_configuration($db);
+    instance_config_with_env(['DIAMON_SMTP_HOST' => '   '], function () use ($db) {
+        $configuration = diamon_get_effective_admin_configuration($db);
 
         assert_same('stored.example.com', $configuration['settings']['smtp_address'],
             'the stored host is kept');
         assert_true(!isset($configuration['managed_fields']['smtp_address']),
             'and the field is not claimed by the environment');
-        assert_contains('WALLOS_SMTP_HOST', implode(' ', $configuration['notes']),
+        assert_contains('DIAMON_SMTP_HOST', implode(' ', $configuration['notes']),
             'the admin page is told the variable was ignored');
     });
 
     $db->close();
 });
 
-wallos_test('a value that is not one of the allowed ones is refused, not stored', function () {
-    $db = wallos_test_open_database();
+diamon_test('a value that is not one of the allowed ones is refused, not stored', function () {
+    $db = diamon_test_open_database();
     instance_config_store_smtp($db);
 
     instance_config_with_env([
-        'WALLOS_SMTP_ENCRYPTION' => 'starttls',
-        'WALLOS_SMTP_PORT' => 'not-a-port',
+        'DIAMON_SMTP_ENCRYPTION' => 'starttls',
+        'DIAMON_SMTP_PORT' => 'not-a-port',
     ], function () use ($db) {
-        $configuration = wallos_get_effective_admin_configuration($db);
+        $configuration = diamon_get_effective_admin_configuration($db);
 
         assert_same('tls', $configuration['settings']['encryption'], 'the stored encryption is kept');
         // Cast, because smtp_port is an INTEGER column and the environment
@@ -169,44 +169,44 @@ wallos_test('a value that is not one of the allowed ones is refused, not stored'
         assert_same('587', (string) $configuration['settings']['smtp_port'], 'and the stored port');
 
         $notes = implode(' ', $configuration['notes']);
-        assert_contains('WALLOS_SMTP_ENCRYPTION', $notes, 'the encryption value is reported');
-        assert_contains('WALLOS_SMTP_PORT', $notes, 'and the port');
+        assert_contains('DIAMON_SMTP_ENCRYPTION', $notes, 'the encryption value is reported');
+        assert_contains('DIAMON_SMTP_PORT', $notes, 'and the port');
     });
 
     $db->close();
 });
 
-wallos_test('a port at the edges is accepted and one outside them is not', function () {
-    $db = wallos_test_open_database();
+diamon_test('a port at the edges is accepted and one outside them is not', function () {
+    $db = diamon_test_open_database();
     instance_config_store_smtp($db);
 
     foreach (['1' => '1', '65535' => '65535', '0' => '587', '65536' => '587', '-1' => '587', '25 ' => '25'] as $set => $expected) {
-        instance_config_with_env(['WALLOS_SMTP_PORT' => $set], function () use ($db, $set, $expected) {
-            $configuration = wallos_get_effective_admin_configuration($db);
+        instance_config_with_env(['DIAMON_SMTP_PORT' => $set], function () use ($db, $set, $expected) {
+            $configuration = diamon_get_effective_admin_configuration($db);
 
             assert_same($expected, (string) $configuration['settings']['smtp_port'],
-                'WALLOS_SMTP_PORT=' . var_export($set, true) . ' resolves to ' . $expected);
+                'DIAMON_SMTP_PORT=' . var_export($set, true) . ' resolves to ' . $expected);
         });
     }
 
     $db->close();
 });
 
-wallos_test('a secret can come from a mounted file', function () {
-    $db = wallos_test_open_database();
+diamon_test('a secret can come from a mounted file', function () {
+    $db = diamon_test_open_database();
     instance_config_store_smtp($db);
 
-    $path = WALLOS_TEST_TMP . '/smtp-password-' . uniqid('', true);
+    $path = DIAMON_TEST_TMP . '/smtp-password-' . uniqid('', true);
     // A file written by Docker or Kubernetes ends in a newline, and the newline
     // is not part of the password.
     file_put_contents($path, "from-the-file\n");
 
-    instance_config_with_env(['WALLOS_SMTP_PASSWORD_FILE' => $path], function () use ($db) {
-        $configuration = wallos_get_effective_admin_configuration($db);
+    instance_config_with_env(['DIAMON_SMTP_PASSWORD_FILE' => $path], function () use ($db) {
+        $configuration = diamon_get_effective_admin_configuration($db);
 
         assert_same('from-the-file', $configuration['settings']['smtp_password'],
             'the password is the content of the file, without its newline');
-        assert_contains('WALLOS_SMTP_PASSWORD_FILE',
+        assert_contains('DIAMON_SMTP_PASSWORD_FILE',
             $configuration['managed_fields']['smtp_password'] ?? '',
             'and the field names the file variable, not the plain one');
     });
@@ -215,18 +215,18 @@ wallos_test('a secret can come from a mounted file', function () {
     $db->close();
 });
 
-wallos_test('the file wins over the plain variable, and a missing file is reported', function () {
-    $db = wallos_test_open_database();
+diamon_test('the file wins over the plain variable, and a missing file is reported', function () {
+    $db = diamon_test_open_database();
     instance_config_store_smtp($db);
 
-    $path = WALLOS_TEST_TMP . '/smtp-password-' . uniqid('', true);
+    $path = DIAMON_TEST_TMP . '/smtp-password-' . uniqid('', true);
     file_put_contents($path, 'from-the-file');
 
     instance_config_with_env([
-        'WALLOS_SMTP_PASSWORD' => 'from-the-variable',
-        'WALLOS_SMTP_PASSWORD_FILE' => $path,
+        'DIAMON_SMTP_PASSWORD' => 'from-the-variable',
+        'DIAMON_SMTP_PASSWORD_FILE' => $path,
     ], function () use ($db) {
-        $configuration = wallos_get_effective_admin_configuration($db);
+        $configuration = diamon_get_effective_admin_configuration($db);
 
         // An installation that has moved a secret into a file did that
         // deliberately; a leftover variable must not quietly win.
@@ -237,43 +237,43 @@ wallos_test('the file wins over the plain variable, and a missing file is report
     unlink($path);
 
     instance_config_with_env([
-        'WALLOS_SMTP_PASSWORD' => 'from-the-variable',
-        'WALLOS_SMTP_PASSWORD_FILE' => $path,
+        'DIAMON_SMTP_PASSWORD' => 'from-the-variable',
+        'DIAMON_SMTP_PASSWORD_FILE' => $path,
     ], function () use ($db) {
-        $configuration = wallos_get_effective_admin_configuration($db);
+        $configuration = diamon_get_effective_admin_configuration($db);
 
         // Falling back to the plain variable here would be worse than failing:
         // the secret was moved out of the environment on purpose.
         assert_same('stored-password', $configuration['settings']['smtp_password'],
             'a file that is not there does not fall back to the variable');
-        assert_contains('WALLOS_SMTP_PASSWORD_FILE', implode(' ', $configuration['notes']),
+        assert_contains('DIAMON_SMTP_PASSWORD_FILE', implode(' ', $configuration['notes']),
             'and the admin page is told why');
     });
 
     $db->close();
 });
 
-wallos_test('a fresh installation that configured nothing by hand can still send mail', function () {
+diamon_test('a fresh installation that configured nothing by hand can still send mail', function () {
     // The point of the whole thing, asked as the application asks it.
     // passwordreset.php refuses to run unless smtp_address and server_url are
     // both set, and on a fresh volume the admin row has neither. An operator
     // who put them in the compose file has configured this installation, and
     // the page has to agree - otherwise the feature is configured and
     // invisible, which is worse than not configured at all.
-    $db = wallos_test_open_database();
+    $db = diamon_test_open_database();
 
-    $stored = wallos_get_admin_settings($db);
+    $stored = diamon_get_admin_settings($db);
     assert_true(empty($stored['smtp_address']), 'a fresh installation has no mail server');
 
     instance_config_with_env([
-        'WALLOS_SMTP_HOST' => 'mail.example.net',
-        'WALLOS_SMTP_PORT' => '587',
-        'WALLOS_SMTP_USERNAME' => 'wallos',
-        'WALLOS_SMTP_PASSWORD' => 'secret',
-        'WALLOS_SMTP_ENCRYPTION' => 'tls',
-        'WALLOS_SERVER_URL' => 'https://wallos.example.net',
+        'DIAMON_SMTP_HOST' => 'mail.example.net',
+        'DIAMON_SMTP_PORT' => '587',
+        'DIAMON_SMTP_USERNAME' => 'diamon',
+        'DIAMON_SMTP_PASSWORD' => 'secret',
+        'DIAMON_SMTP_ENCRYPTION' => 'tls',
+        'DIAMON_SERVER_URL' => 'https://diamon.example.net',
     ], function () use ($db) {
-        $settings = wallos_get_admin_settings($db);
+        $settings = diamon_get_admin_settings($db);
 
         // The exact condition passwordreset.php puts on the page.
         assert_true($settings['smtp_address'] != "" && $settings['server_url'] != "",
@@ -288,14 +288,14 @@ wallos_test('a fresh installation that configured nothing by hand can still send
     $db->close();
 });
 
-wallos_test('a value the environment owns is never written back to the database', function () {
+diamon_test('a value the environment owns is never written back to the database', function () {
     // The inputs are disabled in the admin page, but a disabled input still has
     // a value a script can read and post, so the endpoint has to decide. If it
     // did not, removing the variable later would silently restore a stale mail
     // server that nobody remembers configuring.
-    $source = file_get_contents(WALLOS_ROOT . '/endpoints/admin/savesmtpsettings.php');
+    $source = file_get_contents(DIAMON_ROOT . '/endpoints/admin/savesmtpsettings.php');
 
-    assert_contains("wallos_get_effective_admin_configuration(\$db)['managed_fields']", $source,
+    assert_contains("diamon_get_effective_admin_configuration(\$db)['managed_fields']", $source,
         'the save endpoint asks which fields the environment owns');
     assert_contains('if (isset($managedFields[$column])) {', $source,
         'and skips them when building the update');
@@ -303,11 +303,11 @@ wallos_test('a value the environment owns is never written back to the database'
         'the fixed statement that wrote every column is gone');
 });
 
-wallos_test('a managed secret is not rendered into the page source', function () {
+diamon_test('a managed secret is not rendered into the page source', function () {
     // The reason a secret is mounted rather than passed is that it should not
     // be readable from somewhere else. Printing it into the admin page as the
     // value of an input undoes that.
-    $source = file_get_contents(WALLOS_ROOT . '/admin.php');
+    $source = file_get_contents(DIAMON_ROOT . '/admin.php');
 
     assert_contains("isset(\$instanceManagedFields['smtp_password'])", $source,
         'the password field asks whether the deployment owns it');
@@ -320,7 +320,7 @@ wallos_test('a managed secret is not rendered into the page source', function ()
         'the managed branch renders an empty value rather than the secret');
 });
 
-wallos_test('every reader of the instance mail settings goes through one place', function () {
+diamon_test('every reader of the instance mail settings goes through one place', function () {
     // Two readers that disagree is how "I configured it and the reset link
     // never appeared" happens: the mail job uses the environment and the login
     // page still asks the database whether mail is configured at all.
@@ -331,7 +331,7 @@ wallos_test('every reader of the instance mail settings goes through one place',
         'endpoints/cronjobs/sendverificationemails.php',
         'admin.php',
     ] as $path) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $path);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $path);
 
         assert_contains('instance_config.php', $source, $path . ' includes the instance configuration');
         assert_true(preg_match('/SELECT \* FROM admin|SELECT registrations_open, max_users, server_url, smtp_address FROM admin/', $source) !== 1,
@@ -339,15 +339,15 @@ wallos_test('every reader of the instance mail settings goes through one place',
     }
 });
 
-wallos_test('a managed field a form posted empty is filled in from the effective settings', function () {
+diamon_test('a managed field a form posted empty is filled in from the effective settings', function () {
     // What the admin page does with the password field specifically: the input
     // is rendered blank when the deployment owns it, so the browser posts an
     // empty string for a field that is, in fact, configured.
     $fieldColumns = ['smtppassword' => 'smtp_password', 'fromemail' => 'from_email'];
-    $managedFields = ['smtp_password' => 'WALLOS_SMTP_PASSWORD'];
-    $settings = ['smtp_password' => 'from-the-environment', 'from_email' => 'wallos@example.com'];
+    $managedFields = ['smtp_password' => 'DIAMON_SMTP_PASSWORD'];
+    $settings = ['smtp_password' => 'from-the-environment', 'from_email' => 'diamon@example.com'];
 
-    $filled = wallos_fill_managed_form_fields(
+    $filled = diamon_fill_managed_form_fields(
         ['smtppassword' => '', 'fromemail' => ''],
         $fieldColumns,
         $managedFields,
@@ -360,14 +360,14 @@ wallos_test('a managed field a form posted empty is filled in from the effective
         'a field the environment does not own is left exactly as posted, empty or not');
 });
 
-wallos_test('a managed field is left alone when the form actually posted a value', function () {
+diamon_test('a managed field is left alone when the form actually posted a value', function () {
     // Deciding what the server trusts belongs to the save endpoint, not this
     // helper: a script can still post a value into a disabled field, and this
     // is not the place that rejects it.
-    $filled = wallos_fill_managed_form_fields(
+    $filled = diamon_fill_managed_form_fields(
         ['smtppassword' => 'typed-by-hand'],
         ['smtppassword' => 'smtp_password'],
-        ['smtp_password' => 'WALLOS_SMTP_PASSWORD'],
+        ['smtp_password' => 'DIAMON_SMTP_PASSWORD'],
         ['smtp_password' => 'from-the-environment']
     );
 
@@ -375,10 +375,10 @@ wallos_test('a managed field is left alone when the form actually posted a value
         'a posted value is never overwritten, managed field or not');
 });
 
-wallos_test('an unmanaged field that was posted empty stays empty', function () {
+diamon_test('an unmanaged field that was posted empty stays empty', function () {
     // Nothing here should manufacture a value for an installation that has not
     // asked for any of this - every field is unmanaged, so nothing changes.
-    $filled = wallos_fill_managed_form_fields(
+    $filled = diamon_fill_managed_form_fields(
         ['smtppassword' => ''],
         ['smtppassword' => 'smtp_password'],
         [],
@@ -388,18 +388,18 @@ wallos_test('an unmanaged field that was posted empty stays empty', function () 
     assert_same('', $filled['smtppassword'], 'no field is managed, so nothing is filled in');
 });
 
-wallos_test('the SMTP test endpoint fills in managed fields before it validates or authenticates', function () {
-    // The defect this exists for: an installation with WALLOS_SMTP_PASSWORD set
+diamon_test('the SMTP test endpoint fills in managed fields before it validates or authenticates', function () {
+    // The defect this exists for: an installation with DIAMON_SMTP_PASSWORD set
     // shows the password field as managed and blank, and pressing Test posted
     // that blank straight to PHPMailer - failing against a mail server that
     // was, in fact, configured correctly.
-    $source = file_get_contents(WALLOS_ROOT . '/endpoints/notifications/testemailnotifications.php');
+    $source = file_get_contents(DIAMON_ROOT . '/endpoints/notifications/testemailnotifications.php');
 
     assert_contains('instance_config.php', $source, 'the endpoint reads the instance configuration');
-    assert_contains('wallos_fill_managed_form_fields($data', $source,
+    assert_contains('diamon_fill_managed_form_fields($data', $source,
         'posted fields are passed through the managed-field fallback');
 
-    $fallbackAt = strpos($source, 'wallos_fill_managed_form_fields($data');
+    $fallbackAt = strpos($source, 'diamon_fill_managed_form_fields($data');
     $fillAllFieldsAt = strpos($source, 'fill_all_fields');
     $smtpAuthAt = strpos($source, '$smtpAuth =');
 
@@ -407,4 +407,43 @@ wallos_test('the SMTP test endpoint fills in managed fields before it validates 
         'the fallback runs before the endpoint can reject the request for looking unconfigured');
     assert_true($fallbackAt < $smtpAuthAt,
         'the fallback runs before smtpAuth is decided, or a managed password never turns auth on');
+});
+
+
+diamon_test('variables named before the rename to Diamon keep working', function () {
+    // Deployments set up while the project was still called Wallos use the
+    // WALLOS_ names. They must keep owning their fields after the upgrade, and
+    // the new DIAMON_ name must win as soon as both are present.
+    $db = diamon_test_open_database();
+    instance_config_store_smtp($db);
+
+    $secretFile = tempnam(sys_get_temp_dir(), 'diamon_legacy_secret_');
+    file_put_contents($secretFile, "legacy-file-password
+");
+
+    instance_config_with_env([
+        'DIAMON_SMTP_HOST' => null,
+        'DIAMON_SMTP_PASSWORD' => null,
+        'DIAMON_SMTP_PASSWORD_FILE' => null,
+        'DIAMON_SERVER_URL' => 'https://diamon.example.net',
+        'WALLOS_SMTP_HOST' => 'legacy-mail.example.net',
+        'WALLOS_SMTP_PASSWORD_FILE' => $secretFile,
+        'WALLOS_SERVER_URL' => 'https://legacy.example.net',
+    ], function () use ($db) {
+        $configuration = diamon_get_effective_admin_configuration($db);
+
+        assert_same('legacy-mail.example.net', $configuration['settings']['smtp_address'],
+            'a legacy host is still applied');
+        assert_same('WALLOS_SMTP_HOST', $configuration['managed_fields']['smtp_address'] ?? null,
+            'and the admin page names the legacy variable that owns it');
+        assert_same('legacy-file-password', $configuration['settings']['smtp_password'],
+            'a legacy secret file is still read');
+        assert_same('https://diamon.example.net', $configuration['settings']['server_url'],
+            'the new name wins when both are set');
+        assert_same('DIAMON_SERVER_URL', $configuration['managed_fields']['server_url'] ?? null,
+            'and is the one reported');
+    });
+
+    @unlink($secretFile);
+    $db->close();
 });

@@ -150,6 +150,188 @@ header .logo .logo-image svg {
   height: 16px;
 }
 
+.header-nav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--box-border-color);
+  background-color: var(--header-background-color);
+  color: var(--text-color-secondary, var(--text-color));
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.header-theme-toggle:hover {
+  color: var(--main-color);
+  border-color: var(--main-color);
+}
+
+.header-theme-toggle:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.header-notifications {
+  position: relative;
+  display: inline-flex;
+}
+
+.header-notifications::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: min(360px, calc(100vw - 24px));
+  height: 10px;
+}
+
+.header-notifications-toggle {
+  position: relative;
+}
+
+.header-notifications-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--main-color);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.header-notifications-badge.hide {
+  display: none;
+}
+
+.header-notifications-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(70vh, 420px);
+  overflow: auto;
+  background: var(--box-background-color);
+  border: 1px solid var(--box-border-color);
+  border-radius: 14px;
+  box-shadow: var(--box-shadow);
+}
+
+.header-notifications.is-open .header-notifications-panel {
+  display: block;
+}
+
+@media (min-width: 769px) {
+  .header-notifications:hover .header-notifications-panel {
+    display: block;
+  }
+
+  .header-notifications-panel {
+    scrollbar-width: thin;
+    scrollbar-color: var(--box-border-color) transparent;
+  }
+
+  .header-notifications-panel::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .header-notifications-panel::-webkit-scrollbar-thumb {
+    background: var(--box-border-color);
+    border-radius: 999px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-notifications:hover .header-notifications-panel {
+    display: none;
+  }
+
+  .header-notifications.is-open .header-notifications-panel {
+    display: block;
+  }
+}
+
+.header-notifications-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--box-border-color);
+}
+
+.header-notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.header-notifications-empty {
+  margin: 8px 4px 12px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.header-notification-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--box-border-color);
+  border-radius: 12px;
+  background: var(--header-background-color);
+}
+
+.header-notification-item h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.header-notification-body,
+.header-notification-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-color-secondary, var(--text-muted));
+}
+
+.header-notification-action {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--main-color);
+  background: transparent;
+  color: var(--main-color);
+  text-decoration: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.header-notification-action:hover {
+  background: rgba(var(--main-color-rgb), 0.08);
+}
+
 .dropdown {
   position: relative;
   display: inline-block;
@@ -608,6 +790,35 @@ button.mobile-action-renew {
   border-color: rgba(var(--main-color-rgb), 0.35);
 }
 
+@keyframes subscription-unused-ending {
+  0%,
+  100% {
+    border-color: var(--box-border-color);
+    background-color: var(--box-background-color);
+    box-shadow: var(--box-shadow);
+  }
+
+  50% {
+    border-color: var(--error-color);
+    /* Keep an opaque fill so list-view mobile actions stay hidden behind the card. */
+    background-color: color-mix(in srgb, var(--error-color) 16%, var(--box-background-color));
+    box-shadow: 0 0 0 2px rgba(var(--error-color-rgb), 0.45);
+  }
+}
+
+.subscription.unused-ending {
+  animation: subscription-unused-ending 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subscription.unused-ending {
+    animation: none;
+    border-color: var(--error-color);
+    background-color: color-mix(in srgb, var(--error-color) 16%, var(--box-background-color));
+    box-shadow: 0 0 0 2px rgba(var(--error-color-rgb), 0.45);
+  }
+}
+
 .subscription-container.hide {
   display: none;
 }
@@ -764,12 +975,28 @@ button.mobile-action-renew {
   grid-area: logo;
 }
 
-.subscription .logo img {
+.subscription .logo img,
+.subscription .logo .subscription-catalog-logo {
   width: 100%;
   height: 100%;
   max-height: 42px;
   object-fit: contain;
   min-width: 32px;
+}
+
+.subscription .logo .subscription-logo-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 42px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  background: rgba(127, 127, 127, 0.15);
+  color: var(--main-color);
+  box-sizing: border-box;
 }
 
 .subscription .logo svg {
@@ -845,7 +1072,9 @@ body.light img.logo-theme-variant[data-native-theme="dark"] {
 .subscription .price {
   grid-area: price;
   justify-content: center;
-  flex-direction: row;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .subscriptions:not(.grid-view) .subscription .price .value {
@@ -853,9 +1082,23 @@ body.light img.logo-theme-variant[data-native-theme="dark"] {
   overflow-wrap: break-word;
 }
 
-.subscription .price .original_price {
+.subscription .price .original_price,
+.subscription .price .usage-time {
   font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
   color: var(--text-muted);
+}
+
+.subscription .price .usage-time,
+.subscription .price .value-review {
+  display: block;
+}
+
+.subscription .price .value-review {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error-color);
 }
 
 .subscription .actions {
@@ -1636,6 +1879,16 @@ header #avatar {
   display: none;
 }
 
+.price-error {
+  margin: -8px 0 16px;
+  color: var(--error-color);
+  font-size: 13px;
+}
+
+#price.price-invalid {
+  border-color: var(--error-color);
+}
+
 .height50 {
   height: 50px;
 }
@@ -2387,12 +2640,20 @@ button.dark-theme-button i {
 
 .provider-catalog-search input {
   flex: 1;
+  min-width: 0;
+  width: auto;
+  height: 44px;
   border: none;
   background: transparent;
   box-shadow: none;
   margin: 0;
-  padding: 12px 0;
-  width: 100%;
+  padding: 10px 0;
+}
+
+.provider-catalog-card.hide,
+.provider-catalog-empty.hide,
+.provider-catalog-back-row.hide {
+  display: none;
 }
 
 .provider-catalog-search input:focus {
@@ -4026,6 +4287,8 @@ input[type="radio"]:checked+label::after {
 
 .dashboard-subscriptions-list>.subscription-item.thin {
   height: 115px;
+  width: max-content;
+  min-width: 155px;
 }
 
 .dashboard-subscriptions-list>.subscription-item .subscription-item-title {
@@ -4042,6 +4305,7 @@ input[type="radio"]:checked+label::after {
 
 .dashboard-subscriptions-list>.subscription-item.thin .subscription-item-title {
   font-size: 16px;
+  max-width: 115px;
 }
 
 .dashboard-subscriptions-list>.subscription-item .subscription-item-logo {
@@ -4069,7 +4333,8 @@ input[type="radio"]:checked+label::after {
 }
 
 .dashboard-subscriptions-list>.subscription-item.thin .subscription-item-value {
-  font-size: 20px;;
+  font-size: 20px;
+  white-space: nowrap;
 }
 
 .ai-recommendations-container {
@@ -4210,6 +4475,67 @@ input[type="radio"]:checked+label::after {
 
 .dashboard-subscriptions-container::-webkit-scrollbar {
     display: none;
+}
+
+.dashboard-subscriptions-container.is-draggable,
+.dashboard-subscriptions-container.is-draggable .subscription-item {
+  cursor: grab;
+}
+
+.dashboard-subscriptions-container.is-grabbing,
+.dashboard-subscriptions-container.is-grabbing .subscription-item {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel {
+  overflow: hidden;
+  scroll-behavior: auto;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel .dashboard-subscriptions-list {
+  width: max-content;
+  animation: upcoming-carousel-marquee var(--upcoming-carousel-duration, 28s) linear infinite;
+  will-change: transform;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel:hover .dashboard-subscriptions-list,
+.dashboard-subscriptions-container.is-upcoming-carousel:focus-within .dashboard-subscriptions-list {
+  animation-play-state: paused;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel.is-dragging,
+.dashboard-subscriptions-container.is-upcoming-carousel.is-grabbing {
+  cursor: grabbing;
+  touch-action: none;
+  user-select: none;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel.is-dragging .dashboard-subscriptions-list,
+.dashboard-subscriptions-container.is-upcoming-carousel.is-grabbing .dashboard-subscriptions-list {
+  animation: none !important;
+  cursor: grabbing;
+}
+
+.dashboard-subscriptions-container.is-upcoming-carousel .subscription-item.is-carousel-clone {
+  pointer-events: auto;
+}
+
+@keyframes upcoming-carousel-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-subscriptions-container.is-upcoming-carousel .dashboard-subscriptions-list {
+    animation: none;
+  }
 }
 
 .view-toggle {
@@ -4416,8 +4742,12 @@ input[type="radio"]:checked+label::after {
 
 .subscriptions.grid-view .subscription-main>.name {
   grid-area: name;
+  justify-self: stretch;
+  align-self: start;
+  width: 100%;
   justify-content: flex-start;
   text-align: left;
+  align-items: flex-start;
   font-size: 17px;
   font-weight: 600;
   max-height: none;
@@ -4429,10 +4759,22 @@ input[type="radio"]:checked+label::after {
 .subscriptions.grid-view .subscription-main>.price {
   grid-area: price;
   justify-content: flex-start;
+  align-items: flex-start;
   align-self: start;
   font-size: 23px;
   font-weight: 700;
   margin: 0px 0px 12px;
+}
+
+.subscriptions.grid-view .subscription .price .usage-time {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.subscriptions.grid-view .subscription .price .value-review {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .subscriptions.grid-view .subscription-main>.cycle {
@@ -4726,7 +5068,7 @@ body.details-open {
   box-shadow: none;
 }
 
-.details-price-row .details-export-button {
+.details-price-row .details-edit-button {
   margin-inline-start: auto;
 }
 
@@ -4774,7 +5116,7 @@ body.details-open {
   flex-direction: row;
   align-items: center;
   gap: 8px;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 #details-payment-method img {
@@ -5086,4 +5428,655 @@ body.details-open {
 
 .api-usage-fill.danger {
   background-color: var(--error-color);
+}
+
+.diamon-minibot {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+}
+
+.diamon-minibot-launcher {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+/* Dia herself is the button: no disc behind her, only a soft shadow. */
+.diamon-minibot-fab {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: none;
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 8px 12px rgba(28, 36, 52, 0.22));
+  transition: transform 0.18s ease;
+}
+
+.diamon-minibot-fab:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.diamon-minibot-fab:focus-visible {
+  outline: 3px solid rgba(var(--main-color-rgb), 0.6);
+  outline-offset: 4px;
+}
+
+.diamon-minibot-greeting {
+  margin-bottom: 14px;
+  max-width: 220px;
+  padding: 10px 14px;
+  border: 1px solid var(--box-border-color);
+  border-radius: 14px 14px 14px 4px;
+  background-color: var(--box-background-color);
+  color: var(--text-color);
+  box-shadow: var(--shadow-pop);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  animation: dia-pop 0.35s ease-out;
+}
+
+.diamon-minibot-greeting[hidden] {
+  display: none;
+}
+
+.diamon-minibot-panel {
+  width: min(360px, calc(100vw - 32px));
+  max-height: min(420px, calc(100vh - 120px));
+  background-color: var(--box-background-color);
+  border: 1px solid var(--box-border-color);
+  border-radius: 18px;
+  box-shadow: var(--shadow-pop);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.diamon-minibot-panel[hidden] {
+  display: none;
+}
+
+.diamon-minibot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 10px 10px 14px;
+  border-bottom: 1px solid var(--box-border-color);
+  font-weight: 600;
+}
+
+.diamon-minibot-avatar {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: rgba(142, 190, 249, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diamon-minibot-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.diamon-minibot-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.diamon-minibot-subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.diamon-minibot .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.diamon-minibot-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.diamon-minibot-clear,
+.diamon-minibot-close {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.diamon-minibot-clear:hover,
+.diamon-minibot-close:hover {
+  color: var(--text-color);
+}
+
+.diamon-minibot-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 120px;
+}
+
+.diamon-minibot-bubble {
+  max-width: 92%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.diamon-minibot-row {
+  align-self: flex-start;
+  max-width: 100%;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.diamon-minibot-row .diamon-minibot-bubble {
+  max-width: calc(100% - 34px);
+}
+
+.diamon-minibot-bubble-avatar {
+  margin-bottom: 2px;
+}
+
+.diamon-minibot-bubble.assistant {
+  align-self: flex-start;
+  border-radius: 14px 14px 14px 4px;
+  background-color: var(--surface-hover);
+  color: var(--text-color);
+}
+
+.diamon-minibot-bubble.user {
+  align-self: flex-end;
+  border-radius: 14px 14px 4px 14px;
+  background-color: rgba(var(--main-color-rgb), 0.14);
+  color: var(--text-color);
+}
+
+.diamon-minibot-bubble.thinking {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.diamon-minibot-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--box-border-color);
+}
+
+.diamon-minibot-composer input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-radius: 999px;
+  border: 1px solid var(--input-border-color);
+  background-color: var(--input-background-color);
+  color: var(--text-color);
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.diamon-minibot-send {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--main-color);
+  color: var(--text-color-inverted);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.diamon-minibot-send:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.diamon-minibot-disabled {
+  padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diamon-minibot-disabled p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.diamon-minibot-disabled .button {
+  align-self: flex-start;
+}
+
+/* ---------------------------------------------------------------------------
+   Dia, the assistant's mascot (includes/dia_mascot.php).
+   The triangle from the "a" in the logo; its hollow is the eye and the blue
+   dot is its companion. Every part is always in the SVG and the state in
+   data-dia-state decides which ones show and how they move. Transforms on
+   SVG parts are in the drawing's own units (the viewBox is 780 wide).
+   --------------------------------------------------------------------------- */
+
+.dia-mascot {
+  --dia-body: #8EBEF9;
+  --dia-dot: #2858C5;
+  --dia-ink: #1C2434;
+  flex: 0 0 auto;
+  display: inline-block;
+  width: var(--dia-size, 40px);
+  height: var(--dia-size, 40px);
+  line-height: 0;
+}
+
+.dia-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.dia-triangle {
+  fill: var(--dia-body);
+  transition: fill 0.3s ease;
+}
+
+.dia-dot {
+  fill: var(--dia-dot);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill 0.3s ease;
+}
+
+.dia-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dia-blink 5.5s infinite;
+}
+
+.dia-eye-white {
+  fill: #FFFFFF;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.25s ease;
+}
+
+.dia-pupil-track {
+  transform: translate(var(--dia-look-x, 0px), var(--dia-look-y, 0px));
+  transition: transform 0.18s ease-out;
+}
+
+.dia-pupil {
+  transition: transform 0.25s ease;
+}
+
+.dia-pupil-core {
+  fill: var(--dia-ink);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.25s ease;
+}
+
+.dia-glint {
+  fill: #FFFFFF;
+}
+
+.dia-eye-happy,
+.dia-eye-closed {
+  display: none;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.dia-eye-happy {
+  stroke: var(--dia-ink);
+  stroke-width: 38;
+}
+
+.dia-eye-closed {
+  stroke: #475569;
+  stroke-width: 30;
+}
+
+.dia-zz {
+  display: none;
+  fill: #64748B;
+  font-family: inherit;
+  font-weight: 700;
+}
+
+.dia-shadow {
+  display: none;
+  fill: var(--dia-ink);
+  opacity: 0.12;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.dia-tilt {
+  transform-box: fill-box;
+  transform-origin: 50% 60%;
+  transition: transform 0.3s ease;
+}
+
+.dia-body {
+  animation: dia-float 3.6s ease-in-out infinite;
+}
+
+.dia-mascot.has-shadow .dia-shadow {
+  display: inline;
+  animation: dia-shadow 3.6s ease-in-out infinite;
+}
+
+/* Listening: looks down at the message being typed. */
+.dia-mascot[data-dia-state="listening"] .dia-pupil {
+  transform: translate(-40px, 48px);
+}
+
+/* Thinking: looks up while the dot bounces as the loading indicator. */
+.dia-mascot[data-dia-state="thinking"] .dia-pupil {
+  transform: translate(42px, -60px);
+}
+
+.dia-mascot[data-dia-state="thinking"] .dia-dot {
+  animation: dia-hop 0.9s ease-in-out infinite;
+}
+
+/* Happy: a smiling eye and a livelier bounce. */
+.dia-mascot[data-dia-state="happy"] .dia-eye {
+  display: none;
+}
+
+.dia-mascot[data-dia-state="happy"] .dia-eye-happy {
+  display: inline;
+}
+
+.dia-mascot[data-dia-state="happy"] .dia-body {
+  animation: dia-bounce 1.4s ease-in-out infinite;
+}
+
+/* Confused: leans over with a narrower eye and a smaller pupil. */
+.dia-mascot[data-dia-state="confused"] .dia-tilt {
+  transform: rotate(-8deg);
+}
+
+.dia-mascot[data-dia-state="confused"] .dia-eye-white {
+  transform: scaleY(0.82);
+}
+
+.dia-mascot[data-dia-state="confused"] .dia-pupil {
+  transform: translate(0, 14px);
+}
+
+.dia-mascot[data-dia-state="confused"] .dia-pupil-core {
+  transform: scale(0.69);
+}
+
+/* Sleeping: AI is off. Muted colours, a closed eye and a slow breath. */
+.dia-mascot[data-dia-state="sleeping"] {
+  --dia-body: #CBD5E1;
+  --dia-dot: #94A3B8;
+}
+
+.dia-mascot[data-dia-state="sleeping"] .dia-eye {
+  display: none;
+}
+
+.dia-mascot[data-dia-state="sleeping"] .dia-eye-closed,
+.dia-mascot[data-dia-state="sleeping"] .dia-zz {
+  display: inline;
+}
+
+.dia-mascot[data-dia-state="sleeping"] .dia-body {
+  animation: dia-breathe 5s ease-in-out infinite;
+}
+
+.dia-mascot[data-dia-state="sleeping"] .dia-zz {
+  animation: dia-zz 2.8s ease-in-out infinite;
+}
+
+/* Only an idle Dia follows the pointer; in other moods the eye has a job. */
+.dia-mascot:not([data-dia-state="idle"]) .dia-pupil-track {
+  transform: none;
+}
+
+/* With the panel open, the button's Dia looks up at the conversation. */
+.diamon-minibot.is-open .diamon-minibot-fab .dia-mascot[data-dia-state="idle"] .dia-pupil {
+  transform: translate(0, -62px);
+}
+
+/* Avatars beside older messages hold still. */
+.dia-mascot.dia-static .dia-body,
+.dia-mascot.dia-static .dia-eye,
+.dia-mascot.dia-static .dia-dot,
+.dia-mascot.dia-static .dia-zz,
+.dia-mascot.dia-static .dia-shadow {
+  animation: none;
+}
+
+@keyframes dia-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+
+@keyframes dia-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+@keyframes dia-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-26px); }
+  60% { transform: translateY(-20px); }
+}
+
+@keyframes dia-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes dia-hop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-80px); }
+}
+
+@keyframes dia-shadow {
+  0%, 100% { transform: scaleX(1); opacity: 0.12; }
+  50% { transform: scaleX(0.88); opacity: 0.07; }
+}
+
+@keyframes dia-zz {
+  0%, 100% { opacity: 0.35; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-20px); }
+}
+
+@keyframes dia-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dia-body,
+  .dia-eye,
+  .dia-dot,
+  .dia-zz,
+  .dia-mascot.has-shadow .dia-shadow,
+  .diamon-minibot-greeting {
+    animation: none !important;
+  }
+
+  .dia-pupil,
+  .dia-pupil-track,
+  .dia-pupil-core,
+  .dia-eye-white,
+  .dia-tilt,
+  .diamon-minibot-fab {
+    transition: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-navigation .diamon-minibot {
+    bottom: 78px;
+    left: 12px;
+  }
+
+  .diamon-minibot-panel {
+    max-height: min(360px, calc(100vh - 160px));
+  }
+}
+
+.subscription-cancel-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-width: none;
+  padding: 0;
+  border: 1px solid var(--box-border-color);
+  border-radius: 18px;
+  background-color: var(--box-background-color);
+  color: var(--text-color);
+  box-shadow: var(--shadow-pop);
+}
+
+.subscription-cancel-dialog::backdrop {
+  background-color: rgba(10, 14, 22, 0.55);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.subscription-cancel-content {
+  padding: 26px;
+}
+
+.subscription-cancel-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background-color: rgba(var(--error-color-rgb), 0.12);
+  color: var(--error-color);
+  font-size: 20px;
+}
+
+.subscription-cancel-content h2 {
+  margin: 0 0 10px;
+  font-size: 21px;
+}
+
+.subscription-cancel-content p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.subscription-cancel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.subscription-cancel-actions .button {
+  min-height: 44px;
+  height: auto;
+  padding: 10px 16px;
+}
+
+.subscription-cancel-actions .subscription-cancel-confirm {
+  border-color: var(--error-color);
+  background-color: var(--error-color);
+}
+
+.subscription-cancel-actions .subscription-cancel-confirm:hover {
+  border-color: rgba(var(--error-color-rgb), 0.8);
+  background-color: rgba(var(--error-color-rgb), 0.8);
+}
+
+.subscription-cancel-outcome .subscription-cancel-icon {
+  background-color: rgba(var(--main-color-rgb), 0.12);
+  color: var(--main-color);
+}
+
+.subscription-cancel-content .subscription-cancel-outcome-waiting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 14px;
+}
+
+.subscription-cancel-content .subscription-cancel-outcome-waiting[hidden],
+.subscription-cancel-reopen[hidden] {
+  display: none;
+}
+
+.subscription-cancel-reopen {
+  margin-top: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--main-color);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.subscription .access-until {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 480px) {
+  .subscription-cancel-content {
+    padding: 22px;
+  }
+
+  .subscription-cancel-actions {
+    flex-direction: column-reverse;
+  }
 }

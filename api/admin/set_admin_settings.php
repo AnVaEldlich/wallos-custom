@@ -6,7 +6,7 @@ It receives the following parameters:
 - registrations_open: (optional) '1' or '0' (allow new signups).
 - max_users: (optional) maximum allowed users (integer).
 - require_email_verification: (optional) '1' or '0'.
-- server_url: (optional) url of this wallos instance.
+- server_url: (optional) url of this diamon instance.
 - smtp_address: (optional) SMTP server address.
 - smtp_port: (optional) SMTP port (integer).
 - smtp_username: (optional) SMTP login username.
@@ -14,7 +14,7 @@ It receives the following parameters:
 - from_email: (optional) outgoing email address.
 - encryption: (optional) 'tls' or 'ssl'.
 - login_disabled: (optional) '1' or '0' (disable standard login).
-- update_notification: (optional) '1' or '0' (check for wallos updates).
+- update_notification: (optional) '1' or '0' (check for diamon updates).
 - oidc_oauth_enabled: (optional) '1' or '0' (enable OIDC login).
 - local_webhook_notifications_allowlist: (optional) comma-separated IP/hosts allowlist.
 - allow_standard_users_local_webhooks: (optional) '1' or '0' (let standard users target allowlisted internal addresses).
@@ -184,11 +184,11 @@ $columnsMap = [
     'allow_standard_users_local_webhooks' => SQLITE3_INTEGER
 ];
 
-if (wallos_get_effective_ssrf_allowlist($db)['is_managed']) {
+if (diamon_get_effective_ssrf_allowlist($db)['is_managed']) {
     unset($columnsMap['local_webhook_notifications_allowlist']);
 }
 
-if (isset(wallos_get_effective_oidc_configuration($db)['managed_fields']['enabled'])) {
+if (isset(diamon_get_effective_oidc_configuration($db)['managed_fields']['enabled'])) {
     unset($columnsMap['oidc_oauth_enabled']);
 }
 

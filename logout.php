@@ -2,6 +2,7 @@
 require_once 'includes/connect.php';
 require_once 'includes/oidc_settings.php';
 require_once 'includes/oidc/logout_url.php';
+require_once 'includes/remember_me.php';
 $secondsInMonth = 30 * 24 * 60 * 60;
 if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
@@ -17,7 +18,7 @@ $logoutOIDC = false;
 // Check if user is logged in with OIDC
 if (isset($_SESSION['from_oidc']) && $_SESSION['from_oidc'] === true) {
     $logoutOIDC = true;
-    $oidcConfiguration = wallos_get_effective_oidc_configuration($db);
+    $oidcConfiguration = diamon_get_effective_oidc_configuration($db);
     $oidcSettings = $oidcConfiguration['settings'];
     $logoutUrl = $oidcSettings['logout_url'] ?? '';
     $oidcIdToken = $_SESSION['oidc_id_token'] ?? null;
@@ -40,13 +41,13 @@ if (isset($_SESSION['token'])) {
     $stmt = $db->prepare($sql);
 
     if ($stmt === false) {
-        error_log('Wallos: could not prepare the login token deletion on logout; '
+        error_log('Diamon: could not prepare the login token deletion on logout; '
             . 'any browser still holding the cookie stays signed in');
     } else {
         $stmt->bindParam(':token', $token, SQLITE3_TEXT);
 
         if ($stmt->execute() === false) {
-            error_log('Wallos: could not revoke the login token on logout; '
+            error_log('Diamon: could not revoke the login token on logout; '
                 . 'any browser still holding the cookie stays signed in');
         }
     }
@@ -54,7 +55,8 @@ if (isset($_SESSION['token'])) {
 $_SESSION = array();
 session_destroy();
 $cookieExpire = time() - 3600;
-setcookie('wallos_login', '', $cookieExpire);
+setcookie(DIAMON_LOGIN_COOKIE, '', $cookieExpire);
+setcookie(DIAMON_LEGACY_LOGIN_COOKIE, '', $cookieExpire);
 $db->close();
 
 if ($logoutOIDC && !empty($logoutUrl)) {
@@ -74,7 +76,8 @@ if ($logoutOIDC && !empty($logoutUrl)) {
 <script>
   async function clearAndRedirect() {
     if ('caches' in window) {
-      await caches.delete('pages-cache-v1');
+      await caches.delete('diamon-pages-v1');
+      await caches.delete('pages-cache-v1'); // name used before the rename to Diamon
     }
     sessionStorage.removeItem('sw_prefetched');
     window.location.href = '.';

@@ -19,9 +19,9 @@
   either. One reader now answers for all of them.
 */
 
-require_once WALLOS_ROOT . '/includes/webhook_headers.php';
+require_once DIAMON_ROOT . '/includes/webhook_headers.php';
 
-wallos_test('a value that is not JSON yields no headers instead of ending the run', function () {
+diamon_test('a value that is not JSON yields no headers instead of ending the run', function () {
     // What somebody types who reads "Custom headers" and writes a header.
     assert_same(['Content-Type: application/json'], webhook_custom_headers('Content-Type: application/json'),
         'a plain header line is read as one header, as the cancellation job always did');
@@ -34,22 +34,22 @@ wallos_test('a value that is not JSON yields no headers instead of ending the ru
     assert_same([], webhook_custom_headers(null), 'a column that is NULL yields nothing');
 });
 
-wallos_test('the two shapes that were already in use both produce header lines', function () {
+diamon_test('the two shapes that were already in use both produce header lines', function () {
     // The shape the ntfy blocks documented by example.
     assert_same(['Authorization: Bearer tk_123'],
         webhook_custom_headers('{"Authorization": "Bearer tk_123"}'),
         'an object becomes "Name: value"');
 
     // The shape a value handed straight to cURL had to be.
-    assert_same(['Content-Type: application/json', 'X-Wallos: 1'],
-        webhook_custom_headers('["Content-Type: application/json", "X-Wallos: 1"]'),
+    assert_same(['Content-Type: application/json', 'X-Diamon: 1'],
+        webhook_custom_headers('["Content-Type: application/json", "X-Diamon: 1"]'),
         'a list is taken as complete header lines');
 
     assert_same(['A: 1', 'B: 2'], webhook_custom_headers('{"A": "1", "B": "2"}'),
         'every pair of an object is used, in order');
 });
 
-wallos_test('an entry that cannot be one header line is skipped, not stringified', function () {
+diamon_test('an entry that cannot be one header line is skipped, not stringified', function () {
     assert_same(['Ok: 1'], webhook_custom_headers('{"Ok": "1", "Nested": {"a": "b"}}'),
         'a nested object is skipped rather than written as "Array"');
     assert_same(['Ok: 1'], webhook_custom_headers('{"Ok": "1", "Empty": null}'),
@@ -60,7 +60,7 @@ wallos_test('an entry that cannot be one header line is skipped, not stringified
         'surrounding space is not part of the name or the value');
 });
 
-wallos_test('every reader of the field goes through the one function', function () {
+diamon_test('every reader of the field goes through the one function', function () {
     // The defect was not the decode; it was that five places decided
     // separately what the field means. A new reader that decodes on its own is
     // the same defect again.
@@ -72,7 +72,7 @@ wallos_test('every reader of the field goes through the one function', function 
     ];
 
     foreach ($readers as $path) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $path);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $path);
 
         assert_contains('webhook_custom_headers(', $source, $path . ' reads the field through the helper');
         assert_not_contains('json_decode($webhook["headers"]', $source,
@@ -82,7 +82,7 @@ wallos_test('every reader of the field goes through the one function', function 
     }
 });
 
-wallos_test('cURL never sees anything but an array of lines', function () {
+diamon_test('cURL never sees anything but an array of lines', function () {
     // The direct statement of the crash: whatever the field holds, what
     // reaches CURLOPT_HTTPHEADER is a list of strings.
     foreach ([
@@ -103,15 +103,15 @@ wallos_test('cURL never sees anything but an array of lines', function () {
     }
 });
 
-wallos_test('newline-separated headers (the old cancellation format) still work, and values cannot inject lines', function () {
-    require_once WALLOS_ROOT . '/includes/webhook_headers.php';
+diamon_test('newline-separated headers (the old cancellation format) still work, and values cannot inject lines', function () {
+    require_once DIAMON_ROOT . '/includes/webhook_headers.php';
     assert_same(['X-Token: abc', 'Accept: text/plain'], webhook_custom_headers("X-Token: abc\r\nAccept: text/plain"), 'lines read');
     assert_same([], webhook_custom_headers('not a header at all'), 'garbage yields nothing');
     assert_same(['X-A: one X-Injected: two'], webhook_custom_headers(json_encode(['X-A' => "one\r\nX-Injected: two"])), 'CR/LF neutralised');
 });
 
-wallos_test('a JSON payload is announced as JSON unless the user set a Content-Type (#990)', function () {
-    require_once WALLOS_ROOT . '/includes/webhook_headers.php';
+diamon_test('a JSON payload is announced as JSON unless the user set a Content-Type (#990)', function () {
+    require_once DIAMON_ROOT . '/includes/webhook_headers.php';
     $json = '{"name": "Test", "price": "10"}';
     assert_same(['Content-Type: application/json'], webhook_headers_with_content_type([], $json), 'added for JSON body');
     assert_same(['X-A: 1', 'Content-Type: application/json'], webhook_headers_with_content_type(['X-A: 1'], $json), 'appended');
@@ -119,6 +119,6 @@ wallos_test('a JSON payload is announced as JSON unless the user set a Content-T
     assert_same([], webhook_headers_with_content_type([], 'plain text body'), 'non-JSON untouched');
     assert_same([], webhook_headers_with_content_type([], ''), 'empty body untouched');
     foreach (['endpoints/cronjobs/sendnotifications.php', 'endpoints/cronjobs/sendcancellationnotifications.php', 'endpoints/notifications/testwebhooknotifications.php'] as $file) {
-        assert_true(strpos(file_get_contents(WALLOS_ROOT . '/' . $file), 'webhook_headers_with_content_type(webhook_custom_headers(') !== false, $file . ' applies it');
+        assert_true(strpos(file_get_contents(DIAMON_ROOT . '/' . $file), 'webhook_headers_with_content_type(webhook_custom_headers(') !== false, $file . ' applies it');
     }
 });

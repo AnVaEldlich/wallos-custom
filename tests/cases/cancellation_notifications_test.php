@@ -16,7 +16,7 @@
  */
 function cancellation_cron_query()
 {
-    $source = file_get_contents(WALLOS_ROOT . '/endpoints/cronjobs/sendcancellationnotifications.php');
+    $source = file_get_contents(DIAMON_ROOT . '/endpoints/cronjobs/sendcancellationnotifications.php');
 
     if (!preg_match('/\$query = "(SELECT \* FROM subscriptions WHERE[^"]+)";/', $source, $matches)) {
         return '';
@@ -50,14 +50,14 @@ function cancellation_cron_names($db, $userId)
     return $names;
 }
 
-wallos_test('the cancellation cron query was found in the cron', function () {
+diamon_test('the cancellation cron query was found in the cron', function () {
     assert_contains('cancellation_date', cancellation_cron_query(),
         'the cron still selects subscriptions by cancellation date');
 });
 
-wallos_test('the cancellation cron skips one-time purchases due today', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+diamon_test('the cancellation cron skips one-time purchases due today', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $today = date('Y-m-d');
     $rows = [
@@ -71,7 +71,7 @@ wallos_test('the cancellation cron skips one-time purchases due today', function
                           VALUES (1, :name, 9.99, :currencyId, :nextPayment, :cycle, 1, :inactive, :cancellationDate)');
     foreach ($rows as [$name, $cycle, $inactive, $cancellationDate]) {
         $stmt->bindValue(':name', $name, SQLITE3_TEXT);
-        $stmt->bindValue(':currencyId', wallos_test_currency_id(1, 0), SQLITE3_INTEGER);
+        $stmt->bindValue(':currencyId', diamon_test_currency_id(1, 0), SQLITE3_INTEGER);
         $stmt->bindValue(':nextPayment', date('Y-m-d', strtotime('+5 days')), SQLITE3_TEXT);
         $stmt->bindValue(':cycle', $cycle, SQLITE3_INTEGER);
         $stmt->bindValue(':inactive', $inactive, SQLITE3_INTEGER);
@@ -85,11 +85,11 @@ wallos_test('the cancellation cron skips one-time purchases due today', function
     $db->close();
 });
 
-wallos_test('the shared helper skips one-time purchases and the other exclusions', function () {
-    require_once WALLOS_ROOT . '/includes/upcoming_cancellations.php';
+diamon_test('the shared helper skips one-time purchases and the other exclusions', function () {
+    require_once DIAMON_ROOT . '/includes/upcoming_cancellations.php';
 
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $rows = [
         // name,            cycle, inactive, cancellation_date
@@ -106,7 +106,7 @@ wallos_test('the shared helper skips one-time purchases and the other exclusions
                           VALUES (1, :name, 10.00, :currencyId, :nextPayment, :cycle, 1, :inactive, :cancellationDate)');
     foreach ($rows as [$name, $cycle, $inactive, $cancellationDate]) {
         $stmt->bindValue(':name', $name, SQLITE3_TEXT);
-        $stmt->bindValue(':currencyId', wallos_test_currency_id(1, 0), SQLITE3_INTEGER);
+        $stmt->bindValue(':currencyId', diamon_test_currency_id(1, 0), SQLITE3_INTEGER);
         $stmt->bindValue(':nextPayment', date('Y-m-d', strtotime('+5 days')), SQLITE3_TEXT);
         $stmt->bindValue(':cycle', $cycle, SQLITE3_INTEGER);
         $stmt->bindValue(':inactive', $inactive, SQLITE3_INTEGER);
@@ -122,9 +122,9 @@ wallos_test('the shared helper skips one-time purchases and the other exclusions
     $db->close();
 });
 
-wallos_test('the dashboard and the statistics page both read the shared helper', function () {
+diamon_test('the dashboard and the statistics page both read the shared helper', function () {
     foreach (['index.php', 'stats.php'] as $page) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $page);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $page);
 
         assert_contains('get_upcoming_cancellations(', $source,
             $page . ' calls the shared helper');
@@ -133,8 +133,8 @@ wallos_test('the dashboard and the statistics page both read the shared helper',
     }
 });
 
-wallos_test('the potential-savings total normalizes each cycle and converts each currency', function () {
-    require_once WALLOS_ROOT . '/includes/upcoming_cancellations.php';
+diamon_test('the potential-savings total normalizes each cycle and converts each currency', function () {
+    require_once DIAMON_ROOT . '/includes/upcoming_cancellations.php';
 
     // stats_calculations.php supplies these in the app, but including it runs a
     // page's worth of queries. Stubbing them keeps this focused on the summing

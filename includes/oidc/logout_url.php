@@ -14,7 +14,7 @@
  * @param string      $logoutUrl   The provider's end-session endpoint.
  * @param string      $returnTo    post_logout_redirect_uri, or '' for none.
  * @param string|null $idToken     The ID token issued at login, if known.
- * @param string|null $clientId    The client id Wallos is registered with.
+ * @param string|null $clientId    The client id Diamon is registered with.
  * @return string
  */
 function oidc_build_logout_url($logoutUrl, $returnTo, $idToken = null, $clientId = null)

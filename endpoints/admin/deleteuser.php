@@ -46,6 +46,22 @@ if ($userId == 1) {
     $stmt->bindValue(':id', $userId, SQLITE3_INTEGER);
     $stmt->execute();
 
+    $stmt = $db->prepare('DELETE FROM subscription_usage_sessions WHERE user_id = :id');
+    $stmt->bindValue(':id', $userId, SQLITE3_INTEGER);
+    $stmt->execute();
+
+    $stmt = $db->prepare('DELETE FROM usage_prompt_dismissals WHERE user_id = :id');
+    if ($stmt) {
+        $stmt->bindValue(':id', $userId, SQLITE3_INTEGER);
+        $stmt->execute();
+    }
+
+    $stmt = $db->prepare('DELETE FROM cancellation_attempts WHERE user_id = :id');
+    if ($stmt) {
+        $stmt->bindValue(':id', $userId, SQLITE3_INTEGER);
+        $stmt->execute();
+    }
+
     $stmt = $db->prepare('DELETE FROM subscriptions WHERE user_id = :id');
     $stmt->bindValue(':id', $userId, SQLITE3_INTEGER);
     $result = $stmt->execute();

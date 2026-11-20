@@ -33,7 +33,7 @@ function getPricePerMonth($cycle, $frequency, $price)
 
 function getPriceConverted($price, $currency, $database, $userId)
 {
-  return wallos_convert_price($price, $currency, $database, $userId);
+  return diamon_convert_price($price, $currency, $database, $userId);
 }
 
 // Get all users

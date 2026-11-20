@@ -16,7 +16,7 @@ function iconIndexFetch($url)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Wallos');
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Diamon');
 
     $response = curl_exec($ch);
     $status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
@@ -28,7 +28,7 @@ function iconIndexFetch($url)
 // Fetches an index JSON with a temp-file cache so we don't pull it on every search.
 function iconIndexGetCached($name, $url)
 {
-    $cacheFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'wallos-icon-index-' . $name . '.json';
+    $cacheFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'diamon-icon-index-' . $name . '.json';
 
     if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < ICON_SEARCH_CACHE_TTL) {
         $cached = file_get_contents($cacheFile);

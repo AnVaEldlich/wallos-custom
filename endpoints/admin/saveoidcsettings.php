@@ -23,9 +23,9 @@ $oidcAutoCreateUser = isset($data['oidcAutoCreateUser']) ? (int) $data['oidcAuto
 $oidcPasswordLoginDisabled = isset($data['oidcPasswordLoginDisabled']) ? (int) $data['oidcPasswordLoginDisabled'] : 0;
 $oidcRequireEmailVerified = isset($data['oidcRequireEmailVerified']) ? (int) $data['oidcRequireEmailVerified'] : 1;
 
-$oidcConfiguration = wallos_get_effective_oidc_configuration($db);
+$oidcConfiguration = diamon_get_effective_oidc_configuration($db);
 $managedFields = $oidcConfiguration['managed_fields'];
-$dbSettings = wallos_get_db_oidc_settings($db);
+$dbSettings = diamon_get_db_oidc_settings($db);
 
 $submittedSettings = [
     'name' => $oidcName,

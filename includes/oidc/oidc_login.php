@@ -33,7 +33,7 @@ $addLoginTokensStmt->execute();
 
 $_SESSION['token'] = $token;
 $cookieValue = $username . "|" . $token . "|" . $main_currency;
-setcookie('wallos_login', $cookieValue, [
+setcookie('diamon_login', $cookieValue, [
     'expires' => $cookieExpire,
     'samesite' => 'Lax',
     'httponly' => true,

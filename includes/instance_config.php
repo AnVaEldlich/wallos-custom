@@ -3,7 +3,7 @@
 /*
   Instance settings the deployment can own.
 
-  Wallos keeps its instance SMTP and its public URL in the admin table, entered
+  Diamon keeps its instance SMTP and its public URL in the admin table, entered
   through the admin page. That works, and it keeps working exactly as before -
   but it means the credentials of the mail server live in the database, and that
   somebody has to type them in again by hand after every fresh volume. In a
@@ -30,7 +30,7 @@
  * @param string $name
  * @return string|null
  */
-function wallos_env_value($name)
+function diamon_env_value($name)
 {
     $value = getenv($name);
     if ($value !== false) {
@@ -52,9 +52,9 @@ function wallos_env_value($name)
  * @param string $name
  * @return bool
  */
-function wallos_has_env_value($name)
+function diamon_has_env_value($name)
 {
-    return wallos_env_value($name) !== null;
+    return diamon_env_value($name) !== null;
 }
 
 /**
@@ -70,12 +70,12 @@ function wallos_has_env_value($name)
  * @param string $name
  * @return array{value: string|null, source: string|null, note: string|null}
  */
-function wallos_env_secret($name)
+function diamon_env_secret($name)
 {
     $missing = ['value' => null, 'source' => null, 'note' => null];
 
-    if (wallos_has_env_value($name . '_FILE')) {
-        $path = trim((string) wallos_env_value($name . '_FILE'));
+    if (diamon_has_env_value($name . '_FILE')) {
+        $path = trim((string) diamon_env_value($name . '_FILE'));
 
         if ($path === '') {
             return ['value' => null, 'source' => null, 'note' => $name . '_FILE is empty.'];
@@ -103,11 +103,40 @@ function wallos_env_secret($name)
         return ['value' => $contents, 'source' => $name . '_FILE', 'note' => null];
     }
 
-    if (wallos_has_env_value($name)) {
-        return ['value' => (string) wallos_env_value($name), 'source' => $name, 'note' => null];
+    if (diamon_has_env_value($name)) {
+        return ['value' => (string) diamon_env_value($name), 'source' => $name, 'note' => null];
     }
 
     return $missing;
+}
+
+/**
+ * The name a variable should be read under, honouring its pre-rename spelling.
+ *
+ * Diamon started life as a fork of Wallos, and existing deployments set
+ * WALLOS_SMTP_* and WALLOS_SERVER_URL. The DIAMON_ name wins whenever it - or,
+ * for a secret, its _FILE form - is set; otherwise a WALLOS_ name that is set
+ * is used instead, so an upgraded compose file keeps working untouched and the
+ * admin page names the variable that actually owns the field.
+ *
+ * @param string $name     The current (DIAMON_) variable name.
+ * @param bool   $allowFile Whether <NAME>_FILE also counts as setting it.
+ * @return string
+ */
+function diamon_resolve_env_name($name, $allowFile = false)
+{
+    $isSet = function ($candidate) use ($allowFile) {
+        return diamon_has_env_value($candidate)
+            || ($allowFile && diamon_has_env_value($candidate . '_FILE'));
+    };
+
+    if (strpos($name, 'DIAMON_') !== 0 || $isSet($name)) {
+        return $name;
+    }
+
+    $legacy = 'WALLOS_' . substr($name, strlen('DIAMON_'));
+
+    return $isSet($legacy) ? $legacy : $name;
 }
 
 /**
@@ -115,16 +144,16 @@ function wallos_env_secret($name)
  *
  * @return array<string, string> column => variable name
  */
-function wallos_instance_config_variables()
+function diamon_instance_config_variables()
 {
     return [
-        'smtp_address' => 'WALLOS_SMTP_HOST',
-        'smtp_port' => 'WALLOS_SMTP_PORT',
-        'encryption' => 'WALLOS_SMTP_ENCRYPTION',
-        'smtp_username' => 'WALLOS_SMTP_USERNAME',
-        'smtp_password' => 'WALLOS_SMTP_PASSWORD',
-        'from_email' => 'WALLOS_SMTP_FROM',
-        'server_url' => 'WALLOS_SERVER_URL',
+        'smtp_address' => 'DIAMON_SMTP_HOST',
+        'smtp_port' => 'DIAMON_SMTP_PORT',
+        'encryption' => 'DIAMON_SMTP_ENCRYPTION',
+        'smtp_username' => 'DIAMON_SMTP_USERNAME',
+        'smtp_password' => 'DIAMON_SMTP_PASSWORD',
+        'from_email' => 'DIAMON_SMTP_FROM',
+        'server_url' => 'DIAMON_SERVER_URL',
     ];
 }
 
@@ -133,7 +162,7 @@ function wallos_instance_config_variables()
  *
  * @return string[]
  */
-function wallos_instance_config_secrets()
+function diamon_instance_config_secrets()
 {
     return ['smtp_password'];
 }
@@ -147,7 +176,7 @@ function wallos_instance_config_secrets()
  * @param SQLite3 $db
  * @return array{settings: array, managed_fields: array<string, string>, notes: string[]}
  */
-function wallos_get_effective_admin_configuration($db)
+function diamon_get_effective_admin_configuration($db)
 {
     $settings = [];
     $stmt = $db->prepare('SELECT * FROM admin');
@@ -163,11 +192,13 @@ function wallos_get_effective_admin_configuration($db)
 
     $managedFields = [];
     $notes = [];
-    $secrets = wallos_instance_config_secrets();
+    $secrets = diamon_instance_config_secrets();
 
-    foreach (wallos_instance_config_variables() as $column => $variable) {
+    foreach (diamon_instance_config_variables() as $column => $variable) {
+        $variable = diamon_resolve_env_name($variable, in_array($column, $secrets, true));
+
         if (in_array($column, $secrets, true)) {
-            $secret = wallos_env_secret($variable);
+            $secret = diamon_env_secret($variable);
 
             if ($secret['note'] !== null) {
                 $notes[] = $secret['note'];
@@ -182,11 +213,11 @@ function wallos_get_effective_admin_configuration($db)
             continue;
         }
 
-        if (!wallos_has_env_value($variable)) {
+        if (!diamon_has_env_value($variable)) {
             continue;
         }
 
-        $value = trim((string) wallos_env_value($variable));
+        $value = trim((string) diamon_env_value($variable));
 
         // An empty variable is not a configuration. Treating it as one would
         // let a typo in a compose file silently switch mail off with the admin
@@ -232,9 +263,9 @@ function wallos_get_effective_admin_configuration($db)
  * @param SQLite3 $db
  * @return array
  */
-function wallos_get_admin_settings($db)
+function diamon_get_admin_settings($db)
 {
-    return wallos_get_effective_admin_configuration($db)['settings'];
+    return diamon_get_effective_admin_configuration($db)['settings'];
 }
 
 /**
@@ -254,11 +285,11 @@ function wallos_get_admin_settings($db)
  *
  * @param array<string, mixed>  $posted        Form field name => posted value.
  * @param array<string, string> $fieldColumns  Form field name => admin column.
- * @param array<string, string> $managedFields Admin column => variable name that owns it, from wallos_get_effective_admin_configuration().
+ * @param array<string, string> $managedFields Admin column => variable name that owns it, from diamon_get_effective_admin_configuration().
  * @param array<string, mixed>  $settings      The effective admin settings (column => value) the fallback reads from.
  * @return array<string, mixed> $posted, with any empty managed field filled in.
  */
-function wallos_fill_managed_form_fields($posted, $fieldColumns, $managedFields, $settings)
+function diamon_fill_managed_form_fields($posted, $fieldColumns, $managedFields, $settings)
 {
     foreach ($fieldColumns as $field => $column) {
         $value = isset($posted[$field]) ? trim((string) $posted[$field]) : '';

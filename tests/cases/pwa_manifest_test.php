@@ -21,7 +21,7 @@ function render_manifest($cookies)
     $_COOKIE = $cookies;
 
     ob_start();
-    include WALLOS_ROOT . '/manifest.php';
+    include DIAMON_ROOT . '/manifest.php';
     $output = ob_get_clean();
 
     $_COOKIE = $previousCookies;
@@ -29,17 +29,17 @@ function render_manifest($cookies)
     return json_decode($output, true);
 }
 
-wallos_test('the manifest is valid JSON with the expected content type', function () {
+diamon_test('the manifest is valid JSON with the expected content type', function () {
     ob_start();
-    include WALLOS_ROOT . '/manifest.php';
+    include DIAMON_ROOT . '/manifest.php';
     $output = ob_get_clean();
 
     $decoded = json_decode($output, true);
     assert_true($decoded !== null, 'manifest.php produces valid JSON');
-    assert_same('Wallos', $decoded['short_name'] ?? null, 'the manifest content is otherwise unchanged');
+    assert_same('Diamon', $decoded['short_name'] ?? null, 'the manifest content is otherwise unchanged');
 });
 
-wallos_test('theme_color and background_color track the theme cookie', function () {
+diamon_test('theme_color and background_color track the theme cookie', function () {
     $light = render_manifest(['theme' => 'light']);
     $dark = render_manifest(['theme' => 'dark']);
 
@@ -49,7 +49,7 @@ wallos_test('theme_color and background_color track the theme cookie', function 
     assert_same('#12151C', $dark['background_color'], 'and the background matches it');
 });
 
-wallos_test('automatic mode resolves from the inUseTheme cookie, not just "not light"', function () {
+diamon_test('automatic mode resolves from the inUseTheme cookie, not just "not light"', function () {
     $resolvedDark = render_manifest(['theme' => 'automatic', 'inUseTheme' => 'dark']);
     $resolvedLight = render_manifest(['theme' => 'automatic', 'inUseTheme' => 'light']);
 
@@ -57,7 +57,7 @@ wallos_test('automatic mode resolves from the inUseTheme cookie, not just "not l
     assert_same('#FFFFFF', $resolvedLight['theme_color'], 'automatic + resolved light is light');
 });
 
-wallos_test('missing or invalid cookies default to light, same as the pre-auth pages', function () {
+diamon_test('missing or invalid cookies default to light, same as the pre-auth pages', function () {
     $noCookie = render_manifest([]);
     $garbage = render_manifest(['theme' => '<script>alert(1)</script>']);
 
@@ -65,7 +65,7 @@ wallos_test('missing or invalid cookies default to light, same as the pre-auth p
     assert_same('#FFFFFF', $garbage['theme_color'], 'an invalid theme value is not trusted, falls back to light');
 });
 
-wallos_test('every shortcut icon declares its type, and the shortcut/icon set is unchanged', function () {
+diamon_test('every shortcut icon declares its type, and the shortcut/icon set is unchanged', function () {
     $manifest = render_manifest(['theme' => 'light']);
 
     assert_same(6, count($manifest['shortcuts']), 'all six dashboard shortcuts are still present');
@@ -76,7 +76,7 @@ wallos_test('every shortcut icon declares its type, and the shortcut/icon set is
     }
 });
 
-wallos_test('every page linking the manifest points at manifest.php, not the old static file', function () {
+diamon_test('every page linking the manifest points at manifest.php, not the old static file', function () {
     $files = [
         'includes/header.php',
         'login.php',
@@ -87,14 +87,14 @@ wallos_test('every page linking the manifest points at manifest.php, not the old
     ];
 
     foreach ($files as $file) {
-        $source = file_get_contents(WALLOS_ROOT . '/' . $file);
+        $source = file_get_contents(DIAMON_ROOT . '/' . $file);
         assert_contains('href="manifest.php"', $source, $file . ' links the dynamic manifest');
         assert_not_contains('href="manifest.json"', $source, $file . ' does not still link the removed static file');
     }
 });
 
-wallos_test('the service worker does not cache-first the manifest forever', function () {
-    $source = file_get_contents(WALLOS_ROOT . '/service-worker.php');
+diamon_test('the service worker does not cache-first the manifest forever', function () {
+    $source = file_get_contents(DIAMON_ROOT . '/service-worker.php');
 
     assert_not_contains("'manifest.json'", $source,
         'the old static manifest is not precached (it no longer exists)');
@@ -102,8 +102,8 @@ wallos_test('the service worker does not cache-first the manifest forever', func
         'the dynamic, per-user manifest is not cache-first precached either - it must stay network-first so a theme change is reflected');
 });
 
-wallos_test('the service worker matches versioned static assets when offline', function () {
-    $source = file_get_contents(WALLOS_ROOT . '/service-worker.php');
+diamon_test('the service worker matches versioned static assets when offline', function () {
+    $source = file_get_contents(DIAMON_ROOT . '/service-worker.php');
 
     // The pages request assets as "styles/styles.css?<version>" but they are
     // precached under the bare path, so the static-asset lookup must ignore
@@ -117,15 +117,15 @@ wallos_test('the service worker matches versioned static assets when offline', f
         'a cache miss is backfilled, so an asset the install step dropped (e.g. apexcharts) still ends up cached');
 });
 
-wallos_test('the service worker installs static assets in batches, not all at once', function () {
-    $source = file_get_contents(WALLOS_ROOT . '/service-worker.php');
+diamon_test('the service worker installs static assets in batches, not all at once', function () {
+    $source = file_get_contents(DIAMON_ROOT . '/service-worker.php');
 
     assert_contains('BATCH_SIZE', $source,
         'the install step chunks its fetches so large files are not starved of connections');
 });
 
-wallos_test('the legacy service-worker.js stub hands existing registrations over to service-worker.php', function () {
-    $path = WALLOS_ROOT . '/service-worker.js';
+diamon_test('the legacy service-worker.js stub hands existing registrations over to service-worker.php', function () {
+    $path = DIAMON_ROOT . '/service-worker.js';
 
     assert_true(file_exists($path),
         'browsers registered before the move keep checking service-worker.js; a 404 would leave them on the old worker forever');
@@ -133,10 +133,10 @@ wallos_test('the legacy service-worker.js stub hands existing registrations over
         'the stub loads the version-aware worker');
 });
 
-wallos_test('the service worker cache name is tied to the app version', function () {
-    $source = file_get_contents(WALLOS_ROOT . '/service-worker.php');
+diamon_test('the service worker cache name is tied to the app version', function () {
+    $source = file_get_contents(DIAMON_ROOT . '/service-worker.php');
 
-    assert_contains("'static-cache-<?= \$version ?>-<?= \$assetsStamp ?>'", $source,
+    assert_contains("'diamon-static-<?= \$version ?>-<?= \$assetsStamp ?>'", $source,
         'every release gets a fresh static cache, and activate deletes the old one');
     assert_contains('filemtime(', $source,
         'a changed script or stylesheet changes the cache name too, not only a version bump');

@@ -1,22 +1,27 @@
 services:
-  wallos:
-    container_name: wallos
-    image: bellamy/wallos:latest
+  diamon:
+    container_name: diamon
+    # Build from this repo so local UI/code changes are served.
+    # Upgrading from a setup where this service was called "wallos"? Run
+    # `docker compose up -d --build --remove-orphans` once; the ./db and ./logos
+    # volumes below are unchanged, so no data moves.
+    build: .
+    image: diamon-local
     ports:
       - "8282:80/tcp"
     environment:
-      TZ: 'America/Toronto'
+      TZ: 'America/Bogota'
       # Optional OIDC environment variables
       # OIDC_ENABLED: "true"
       # OIDC_PROVIDER_NAME: "Authelia"
-      # OIDC_CLIENT_ID: "wallos"
+      # OIDC_CLIENT_ID: "diamon"
       # OIDC_CLIENT_SECRET: "replace-me"
-      # OIDC_CLIENT_SECRET_FILE: "/run/secrets/wallos_oidc_secret"
+      # OIDC_CLIENT_SECRET_FILE: "/run/secrets/diamon_oidc_secret"
       # OIDC_ISSUER: "https://auth.example.com"
       # OIDC_AUTH_URL: "https://auth.example.com/oauth2/authorize"
       # OIDC_TOKEN_URL: "https://auth.example.com/oauth2/token"
       # OIDC_USERINFO_URL: "https://auth.example.com/oauth2/userinfo"
-      # OIDC_REDIRECT_URL: "https://wallos.example.com/index.php"
+      # OIDC_REDIRECT_URL: "https://diamon.example.com/index.php"
       # OIDC_LOGOUT_URL: "https://auth.example.com/logout"
       # OIDC_USER_IDENTIFIER: "sub"
       # OIDC_SCOPES: "openid email profile"

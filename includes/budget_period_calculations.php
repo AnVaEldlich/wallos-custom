@@ -258,7 +258,7 @@ if (!function_exists('getSubscriptionOccurrencesInRange')) {
 if (!function_exists('convertPriceToMainCurrency')) {
     function convertPriceToMainCurrency($price, $currencyId, SQLite3 $database, $userId)
     {
-        return wallos_convert_price($price, $currencyId, $database, $userId);
+        return diamon_convert_price($price, $currencyId, $database, $userId);
     }
 }
 

@@ -8,6 +8,8 @@ require_once '../../includes/logo_theme_variant.php';
 include_once '../../includes/list_subscriptions.php';
 require_once '../../includes/subscription_payers.php';
 require_once '../../includes/subscription_categories.php';
+require_once '../../includes/usage_sessions.php';
+require_once '../../includes/subscription_value_score.php';
 
 require_once '../../includes/getsettings.php';
 
@@ -160,25 +162,25 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
   $categoriesBySubscription = getCategoriesBySubscription($db, $subscriptions);
 
   foreach ($subscriptions as $subscription) {
-    if ($subscription['inactive'] == 1 && isset($settings['hideDisabledSubscriptions']) && $settings['hideDisabledSubscriptions'] === 'true') {
-      continue;
-    }
     $id = $subscription['id'];
     $print[$id]['id'] = $id;
     $print[$id]['logo'] = $subscription['logo'] != "" ? "images/uploads/logos/" . $subscription['logo'] : "";
     $print[$id]['logo_text_color'] = $subscription['logo_text_color'] ?? null;
     $print[$id]['logo_variant'] = !empty($subscription['logo_variant']) ? "images/uploads/logos/" . $subscription['logo_variant'] : null;
+    $print[$id]['provider_catalog_id'] = $subscription['provider_catalog_id'] ?? '';
     $print[$id]['name'] = $subscription['name'] ?? "";
     $cycle = $subscription['cycle'];
     $frequency = $subscription['frequency'];
     $print[$id]['billing_cycle'] = getBillingCycle($cycle, $frequency, $i18n);
     $print[$id]['one_time'] = ($cycle == 5);
+    $print[$id]['cycle'] = $cycle;
+    $print[$id]['frequency'] = $frequency;
     $paymentMethodId = $subscription['payment_method_id'];
-    $print[$id]['currency_code'] = $currencies[$subscription['currency_id']]['code'];
     $currencyId = $subscription['currency_id'];
     $next_payment_timestamp = strtotime($subscription['next_payment']);
     $formatted_date = $formatter->format($next_payment_timestamp);
     $print[$id]['next_payment'] = $formatted_date;
+    $print[$id]['next_payment_iso'] = date('Y-m-d', $next_payment_timestamp);
     $print[$id]['auto_renew'] = $subscription['auto_renew'];
     $paymentIcon = $payment_methods[$paymentMethodId ?? ""]['icon'] ?? "";
     $paymentIconFolder = (strpos($paymentIcon, 'images/uploads/icons/') !== false) ? "" : "images/uploads/logos/";
@@ -189,18 +191,16 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     $print[$id]['category_ids'] = $categoriesBySubscription[$id] ?? [];
     $print[$id]['payer_user_id'] = $subscription['payer_user_id'];
     $print[$id]['payer_user_ids'] = $payersBySubscription[$id] ?? [];
-    $print[$id]['price'] = floatval($subscription['price']);
+    applyDisplayedSubscriptionPrice($print[$id], $subscription['price'], $currencyId, $mainCurrencyId, $settings, $currencies, $db);
+    $print[$id]['score_monthly_price'] = getPricePerMonth($cycle, $frequency, $print[$id]['price']);
     $print[$id]['sort_price'] = getSortPrice($subscription['price'], $subscription['currency_id'], $mainCurrencyId, $cycle, $frequency, $settings, $db);
     $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment']);
     $print[$id]['inactive'] = $subscription['inactive'];
+    $print[$id]['cancellation_date'] = $subscription['cancellation_date'] ?? null;
     $print[$id]['url'] = $subscription['url'] ?? "";
     $print[$id]['notes'] = $subscription['notes'] ?? "";
     $print[$id]['replacement_subscription_id'] = $subscription['replacement_subscription_id'];
 
-    if (isset($settings['convertCurrency']) && $settings['convertCurrency'] === 'true' && $currencyId != $mainCurrencyId) {
-      $print[$id]['price'] = getPriceConverted($print[$id]['price'], $currencyId, $db);
-      $print[$id]['currency_code'] = $currencies[$mainCurrencyId]['code'];
-    }
     if (isset($settings['showMonthlyPrice']) && $settings['showMonthlyPrice'] === 'true') {
       $print[$id]['price'] = getPricePerMonth($cycle, $frequency, $print[$id]['price']);
     }
@@ -209,6 +209,21 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
       $print[$id]['original_currency_code'] = $currencies[$subscription['currency_id']]['code'];
     }
   }
+
+  $usageAsOf = time();
+  $usageSummaries = usage_summaries_for_user($db, $userId, $usageAsOf);
+  if (!isset($print)) {
+    $print = [];
+  }
+  foreach ($print as $usageId => $usageRow) {
+    $usageSummary = $usageSummaries[$usageRow['id']] ?? usage_empty_summary($usageAsOf);
+    $print[$usageId]['usage_label'] = usage_format_duration($usageSummary['total']);
+    $print[$usageId]['usage_seconds'] = $usageSummary['total'];
+    $print[$usageId]['usage_last_used'] = $usageSummary['last_used'];
+    $print[$usageId]['usage_live'] = $usageSummary['live'];
+    $print[$usageId]['usage_as_of'] = $usageSummary['as_of'];
+  }
+  attach_subscription_value_bands($db, $userId, $print);
 
   if ($sortOrder == "alphanumeric") {
     usort($print, function ($a, $b) {

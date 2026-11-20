@@ -1,15 +1,15 @@
 """
-Regenerates the README screenshots against a running Wallos instance.
+Regenerates the README screenshots against a running Diamon instance.
 
 Requires: pip install playwright && playwright install chromium
 
 Usage:
-    WALLOS_URL=http://172.26.64.1/wallos \
-    WALLOS_USERNAME=ellite \
-    WALLOS_PASSWORD=screenshots \
+    DIAMON_URL=http://172.26.64.1/diamon \
+    DIAMON_USERNAME=ellite \
+    DIAMON_PASSWORD=screenshots \
     python3 capture_screenshots.py
 
-WALLOS_URL defaults to http://172.26.64.1/wallos, which is the default
+DIAMON_URL defaults to http://172.26.64.1/diamon, which is the default
 gateway address XAMPP on Windows is reachable at from WSL2.
 
 Expects a test account with curated subscriptions (including one named
@@ -21,9 +21,9 @@ import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-BASE = os.environ.get("WALLOS_URL", "http://172.26.64.1/wallos")
-USERNAME = os.environ["WALLOS_USERNAME"]
-PASSWORD = os.environ["WALLOS_PASSWORD"]
+BASE = os.environ.get("DIAMON_URL", "http://172.26.64.1/diamon")
+USERNAME = os.environ["DIAMON_USERNAME"]
+PASSWORD = os.environ["DIAMON_PASSWORD"]
 OUT = Path(__file__).resolve().parent
 
 DESKTOP_VIEWPORT = {"width": 1280, "height": 1100}
@@ -86,28 +86,28 @@ def capture_desktop(page, dark):
 
     page.goto(f"{BASE}/index.php")
     page.wait_for_load_state('networkidle')
-    shot(page, f"wallos-dashboard-{suffix}.png")
+    shot(page, f"diamon-dashboard-{suffix}.png")
 
     page.goto(f"{BASE}/subscriptions.php")
     page.wait_for_load_state('networkidle')
-    shot(page, f"wallos-subscriptions-{suffix}.png")
+    shot(page, f"diamon-subscriptions-{suffix}.png")
 
     if not dark:
         page.goto(f"{BASE}/stats.php")
         page.wait_for_load_state('networkidle')
         page.evaluate("window.scrollTo(0, 200)")
         page.wait_for_timeout(200)
-        shot(page, "wallos-stats.png")
+        shot(page, "diamon-stats.png")
 
         page.goto(f"{BASE}/calendar.php")
         page.wait_for_load_state('networkidle')
-        shot(page, "wallos-calendar.png")
+        shot(page, "diamon-calendar.png")
 
         open_add_form(page)
-        shot(page, "wallos-form.png")
+        shot(page, "diamon-form.png")
 
         open_vodafone_popup(page)
-        shot(page, "wallos-subscriptions-popup.png")
+        shot(page, "diamon-subscriptions-popup.png")
         close_popup(page)
 
 
@@ -116,16 +116,16 @@ def capture_mobile(page, dark):
 
     page.goto(f"{BASE}/subscriptions.php")
     page.wait_for_load_state('networkidle')
-    shot(page, f"wallos-subscriptions-mobile-{suffix}.png")
+    shot(page, f"diamon-subscriptions-mobile-{suffix}.png")
 
     if not dark:
         open_vodafone_popup(page)
-        shot(page, "wallos-subscriptions-mobile-sheet.png")
+        shot(page, "diamon-subscriptions-mobile-sheet.png")
         close_popup(page)
 
     page.goto(f"{BASE}/index.php")
     page.wait_for_load_state('networkidle')
-    shot(page, f"wallos-dashboard-mobile-{suffix}.png")
+    shot(page, f"diamon-dashboard-mobile-{suffix}.png")
 
 
 def main():

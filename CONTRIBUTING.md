@@ -1,15 +1,15 @@
-# Contributing to wallos
+# Contributing to Diamon
 
 We welcome contributions from the community and look forward to working with you to improve this project!
 
 ## How to Contribute
 
-1.  **Fork the repository:** Start by forking the wallos repository to your own GitHub account.
+1.  **Fork the repository:** Start by forking the Diamon repository to your own GitHub account.
 2.  **Clone your fork:** Clone the forked repository to your local machine (replace <YOUR_USERNAME> with your actual github username):
 
     ```bash
-    git clone https://github.com/<YOUR_USERNAME>/wallos.git
-    cd wallos
+    git clone https://github.com/<YOUR_USERNAME>/<YOUR_FORK>.git
+    cd <YOUR_FORK>
     ```
 
 3.  **Create a branch:** Create a new branch for your changes:
@@ -27,7 +27,7 @@ We welcome contributions from the community and look forward to working with you
 4.  **Make your changes:** Implement your feature or bug fix.
 5.  **Test your changes:** Ensure that your changes work as expected.
 
-    Wallos has a small test suite in `tests/`. It needs no Composer or local PHP
+    Diamon has a small test suite in `tests/`. It needs no Composer or local PHP
     installation — it runs in a throwaway container:
 
     ```bash
@@ -51,7 +51,7 @@ We welcome contributions from the community and look forward to working with you
     git push origin feature/your-feature-name
     ```
 
-8.  **Create a Pull Request:** Go to the wallos repository on GitHub (https://github.com/ellite/wallos) and create a pull request from your branch to the `main` branch.
+8.  **Create a Pull Request:** Go to the Diamon repository you forked from on GitHub and create a pull request from your branch to the `main` branch.
 
 ## Pull Request Guidelines
 
@@ -69,7 +69,7 @@ We welcome contributions from the community and look forward to working with you
 
 ## Translations
 
-If you want to contribute with a translation of wallos:
+If you want to contribute with a translation of Diamon:
 
 1.  **Add your language code:**
     * Open `includes/i18n/languages.php`.
@@ -86,7 +86,10 @@ If you want to contribute with a translation of wallos:
 
 3.  **Create a Pull Request:** Follow the Pull Request Guidelines above.
 
-## Contributors
+## Upstream contributors
+
+Diamon is a fork of [Wallos](https://github.com/ellite/Wallos). Changes that are not specific to Diamon are
+best proposed upstream as well. Thanks to everyone who contributed to Wallos:
 
 <a href="https://github.com/ellite/wallos/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=ellite/wallos" />

@@ -20,10 +20,10 @@
  */
 function totp_enrolment_source()
 {
-    return file_get_contents(WALLOS_ROOT . '/endpoints/user/enable_totp.php');
+    return file_get_contents(DIAMON_ROOT . '/endpoints/user/enable_totp.php');
 }
 
-wallos_test('the enrolment writes are one transaction', function () {
+diamon_test('the enrolment writes are one transaction', function () {
     $source = totp_enrolment_source();
 
     assert_contains("'BEGIN'", $source, 'the enrolment opens a transaction');
@@ -31,7 +31,7 @@ wallos_test('the enrolment writes are one transaction', function () {
     assert_contains("'ROLLBACK'", $source, 'and rolls back when a write fails');
 });
 
-wallos_test('no write in the enrolment is discarded', function () {
+diamon_test('no write in the enrolment is discarded', function () {
     // The defect was not a missing transaction alone. Each of the three writes
     // returned a result nobody read, so a transaction that was never told to
     // roll back would have committed the broken state just as happily.
@@ -52,12 +52,12 @@ wallos_test('no write in the enrolment is discarded', function () {
         . implode(', ', $discarded) . ')');
 });
 
-wallos_test('a rolled back enrolment leaves the account exactly as it was', function () {
+diamon_test('a rolled back enrolment leaves the account exactly as it was', function () {
     // The guarantee the fix rests on, checked against the real schema rather
     // than assumed: the rollback has to cover both tables, or the account is
     // left in the state above.
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'alice');
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'alice');
 
     $db->exec('BEGIN');
 

@@ -119,7 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" || $_SERVER["REQUEST_METHOD"] === "GET
 
     function getPriceConverted($price, $currency, $database)
     {
-        return wallos_convert_price($price, $currency, $database);
+        return diamon_convert_price($price, $currency, $database);
     }
 
     // Get user from API key

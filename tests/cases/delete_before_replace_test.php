@@ -32,7 +32,7 @@ function delete_before_replace_files()
 {
     $files = [];
     $walk = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator(WALLOS_ROOT, FilesystemIterator::SKIP_DOTS)
+        new RecursiveDirectoryIterator(DIAMON_ROOT, FilesystemIterator::SKIP_DOTS)
     );
 
     foreach ($walk as $file) {
@@ -42,7 +42,7 @@ function delete_before_replace_files()
             continue;
         }
 
-        $relative = ltrim(substr($path, strlen(WALLOS_ROOT)), '/');
+        $relative = ltrim(substr($path, strlen(DIAMON_ROOT)), '/');
 
         if (strpos($relative, 'libs/') === 0 || strpos($relative, 'tests/') === 0) {
             continue;
@@ -172,11 +172,11 @@ function delete_before_replace_pairs($source)
     return $pairs;
 }
 
-wallos_test('a delete is checked wherever the insert that replaces it is', function () {
+diamon_test('a delete is checked wherever the insert that replaces it is', function () {
     $governed = 0;
 
     foreach (delete_before_replace_files() as $path) {
-        foreach (delete_before_replace_pairs(file_get_contents(WALLOS_ROOT . '/' . $path)) as $pair) {
+        foreach (delete_before_replace_pairs(file_get_contents(DIAMON_ROOT . '/' . $path)) as $pair) {
             if (!$pair['insertIsRead']) {
                 // Neither half is read. Left alone on purpose: adding a check
                 // to the delete alone would not make that file honest, and this
@@ -199,9 +199,9 @@ wallos_test('a delete is checked wherever the insert that replaces it is', funct
         'the tree was swept and the replace pairs were found (' . $governed . ' found)');
 });
 
-wallos_test('the second row really does get in, and reading the result is what stops it', function () {
-    $db = wallos_test_open_database();
-    wallos_test_create_user($db, 1, 'theme');
+diamon_test('the second row really does get in, and reading the result is what stops it', function () {
+    $db = diamon_test_open_database();
+    diamon_test_create_user($db, 1, 'theme');
 
     $save = function ($colour) use ($db) {
         $stmt = $db->prepare('INSERT INTO custom_colors (main_color, accent_color, hover_color, user_id)
@@ -222,7 +222,7 @@ wallos_test('the second row really does get in, and reading the result is what s
         // SQLite reports all of them the same way, through the statement
         // result, so a trigger that refuses the delete reproduces the case
         // exactly and without waiting for a race.
-        $db->exec("CREATE TRIGGER wallos_test_refuse_delete BEFORE DELETE ON custom_colors
+        $db->exec("CREATE TRIGGER diamon_test_refuse_delete BEFORE DELETE ON custom_colors
                    BEGIN SELECT RAISE(ABORT, 'refused'); END");
     };
 
@@ -247,7 +247,7 @@ wallos_test('the second row really does get in, and reading the result is what s
         'and the reader answers with one of them without being able to say which');
 
     // Back to one row, then the shape they have now.
-    $db->exec('DROP TRIGGER wallos_test_refuse_delete');
+    $db->exec('DROP TRIGGER diamon_test_refuse_delete');
     $db->exec('DELETE FROM custom_colors WHERE user_id = 1');
     $save('#000000');
     $refuseDeletes();

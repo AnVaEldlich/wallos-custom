@@ -2,7 +2,7 @@
 /*
 This API Endpoint accepts POST requests only.
 It receives the following parameters:
-- api_key: the API key of the user (for Wallos authentication).
+- api_key: the API key of the user (for Diamon authentication).
 - action: the action to perform ('add', 'edit', 'delete').
 - id / subscription_id: (required for 'edit' and 'delete') the ID of the subscription.
 
@@ -955,6 +955,9 @@ switch ($action) {
         $stmtCategories = $db->prepare("DELETE FROM subscription_categories WHERE subscription_id = :subId");
         $stmtCategories->bindParam(':subId', $subscriptionId, SQLITE3_INTEGER);
         $stmtCategories->execute();
+
+        require_once '../../includes/usage_sessions.php';
+        usage_delete_for_subscription_ids($db, $userId, [$subscriptionId]);
 
         $sqlDelete = "DELETE FROM subscriptions WHERE id = :subId AND user_id = :userId";
         $stmtDelete = $db->prepare($sqlDelete);

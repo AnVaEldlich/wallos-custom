@@ -3,6 +3,8 @@ set_time_limit(300);
 require_once 'validate.php';
 require_once __DIR__ . '/../../includes/connect_endpoint_crontabs.php';
 require_once __DIR__ . '/../../includes/ssrf_helper.php';
+require_once __DIR__ . '/../../includes/ai_subscription_context.php';
+require_once __DIR__ . '/../../includes/subscription_categories.php';
 
 if (php_sapi_name() === 'cli') {
     $runType = $argv[1] ?? 'weekly';
@@ -32,33 +34,6 @@ while ($row = $queryResult->fetchArray(SQLITE3_ASSOC)) {
     $allAiSettings[] = $row;
 }
 $stmt->close();
-
-function getPricePerMonth($cycle, $frequency, $price)
-{
-    switch ($cycle) {
-        case 1:  return $price * (30 / $frequency);
-        case 2:  return $price * (4.35 / $frequency);
-        case 3:  return $price / $frequency;
-        case 4:  return $price / (12 * $frequency);
-        case 5:  return 0;
-        default: return $price;
-    }
-}
-
-function describeFrequency($cycle, $frequency)
-{
-    if ($cycle === 5) {
-        return 'One-time purchase (lifetime)';
-    }
-    $unit = match ($cycle) {
-        1 => 'day',
-        2 => 'week',
-        3 => 'month',
-        4 => 'year',
-        default => 'unit'
-    };
-    return $frequency == 1 ? "Every $unit" : "Every $frequency {$unit}s";
-}
 
 require_once __DIR__ . '/../../includes/i18n/languages.php';
 
@@ -117,14 +92,12 @@ foreach ($allAiSettings as $aiSettings) {
         $categories[$row['id']] = $row;
     }
 
-    // Currencies
-    $curStmt = $db->prepare("SELECT * FROM currencies WHERE user_id = :user_id");
-    $curStmt->bindValue(':user_id', $tempUserId, SQLITE3_INTEGER);
-    $curResult = $curStmt->execute();
-    $currencies = [];
-    while ($row = $curResult->fetchArray(SQLITE3_ASSOC)) {
-        $currencies[$row['id']] = $row;
+    $financialContext = ai_user_financial_context($db, $tempUserId);
+    if ($financialContext === null || $financialContext['currency_code'] === '') {
+        $failures[] = ['user_id' => $tempUserId, 'reason' => 'user reporting currency unavailable'];
+        continue;
     }
+    $currencies = $financialContext['currencies'];
 
     // Household members
     $memStmt = $db->prepare("SELECT * FROM household WHERE user_id = :user_id");
@@ -157,30 +130,51 @@ foreach ($allAiSettings as $aiSettings) {
     }
 
     $subscriptionsForAI = [];
+    $valueFacts = subscription_value_facts_for_subscriptions($db, $tempUserId, $subscriptions);
+    $costContext = ai_subscription_cost_context(
+        $subscriptions,
+        $currencies,
+        $financialContext['currency_id'],
+        $financialContext['currency_rates']
+    );
+    $categoriesBySubscription = getCategoriesBySubscription($db, $subscriptions);
+    $payersBySubscription = getPayersBySubscription($db, $subscriptions);
     foreach ($subscriptions as $row) {
-        if ($row['inactive']) continue;
-        $price = round($row['price'], 2);
-        $currencyCode = $currencies[$row['currency_id']]['code'] ?? '';
-        $priceFormatted = $currencyCode ? "$price $currencyCode" : "$price";
-        $payerName = $members[$row['payer_user_id']]['name'] ?? 'Unknown';
-        $subscriptionsForAI[] = [
-            'name'      => $row['name'],
-            'price'     => $priceFormatted,
-            'frequency' => describeFrequency($row['cycle'], $row['frequency']),
-            'category'  => $categories[$row['category_id']]['name'] ?? 'Uncategorized',
-            'payer'     => $payerName,
-        ];
+        $subscriptionId = (int) $row['id'];
+        $facts = $costContext['subscriptions'][$subscriptionId] ?? [];
+        $valueFact = $valueFacts[$subscriptionId] ?? [];
+        $usageConfidence = (string) ($valueFact['usage_confidence'] ?? 'none');
+        $categoryNames = [];
+        foreach ($categoriesBySubscription[$subscriptionId] ?? [] as $categoryId) {
+            if (isset($categories[$categoryId]['name'])) {
+                $categoryNames[] = $categories[$categoryId]['name'];
+            }
+        }
+        $payerNames = [];
+        foreach ($payersBySubscription[$subscriptionId] ?? [] as $payerId) {
+            if (isset($members[$payerId]['name'])) {
+                $payerNames[] = $members[$payerId]['name'];
+            }
+        }
+
+        $facts['categories'] = $categoryNames;
+        $facts['payers'] = $payerNames;
+        $facts['usage_seconds_current_billing_period'] = $usageConfidence === 'none'
+            ? null
+            : (int) ($valueFact['period_usage_seconds'] ?? 0);
+        $facts['usage_confidence'] = $usageConfidence;
+        $facts['days_until_renewal'] = $valueFact['days_until_renewal'] ?? null;
+        $facts['value_assessment'] = $valueFact['value_band'] ?? 'unknown';
+        $subscriptionsForAI[] = $facts;
     }
 
+    $currencyCode = $financialContext['currency_code'];
     $prompt = <<<PROMPT
 You are a helpful assistant designed to help users save money on digital subscriptions.
 
-The user has shared a list of their active subscriptions across household members. For each subscription, you are given:
-- Name of the service
-- Price (in original currency)
-- Payment frequency (e.g., every month, every year, etc.) — entries marked "One-time purchase (lifetime)" are perpetual licenses already paid for, not recurring costs
-- Category
-- Payer (which household member pays for it)
+The user's only reporting currency is {$currencyCode}. Every monetary amount in your recommendations and savings MUST use {$currencyCode}; do not mention or compare any other currency.
+Use only the supplied server-calculated prices and totals. Never convert or add prices yourself. If conversion is unavailable or a total is incomplete, do not estimate savings for the affected subscription or claim a complete total.
+Monthly and annualized costs are recurring-cost equivalents calculated using Diamon billing-cycle rules. One-time purchases are not recurring costs. A null usage value or confidence "none" means usage is unknown, not zero.
 
 Analyze the data and give 3 to 7 smart and specific recommendations to reduce subscription costs. If possible, include estimated savings for each suggestion.
 
@@ -195,21 +189,28 @@ Follow these guidelines:
 - Recommend switching from monthly to yearly plans only if it provides clear savings and the user is likely to keep the service long-term.
 - Suggest looking for promo or new customer deals if a service appears overpriced.
 - Only recommend cancelling rarely used services if they do not provide unique value.
+- Do not recommend cancelling a subscription whose value assessment is keep.
+- Prioritize subscriptions whose value assessment is review.
 - Do NOT suggest cancelling or changing one-time purchases (lifetime licenses) — they are already paid for and have no ongoing cost.
 
 Return the result as a JSON array. Each item in the array should have:
 - "title": a short summary of the suggestion
 - "description": a longer explanation with reasoning
-- "savings": a rough estimate like "10 EUR/month" or "60 EUR/year" (if possible)
+- "savings": a rough estimate using only {$currencyCode} (if supported by the supplied data)
 
 If possible, all text should be in the user's language: {$userLanguageName}. Otherwise, use English.
 
 Do not include any other text, just the JSON output. Absolutely no additional comments or explanations.
 
-Here is the user's data:
+Here is the user's authoritative account data. All monetary values are in {$currencyCode}:
 PROMPT;
 
-    $prompt .= "\n\n" . json_encode($subscriptionsForAI, JSON_PRETTY_PRINT);
+    $prompt .= "\n\n" . json_encode([
+        'currency' => $currencyCode,
+        'totals' => $costContext['totals'],
+        'budget' => ai_user_budget_context($financialContext),
+        'subscriptions' => $subscriptionsForAI,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
     // cURL request
     $ch = curl_init();

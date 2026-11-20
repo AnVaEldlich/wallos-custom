@@ -25,7 +25,7 @@ while ($userToUpdateExchange = $usersToUpdateExchange->fetchArray(SQLITE3_ASSOC)
     // container start, so without this a deploy costs one provider request per
     // account, and a free plan's monthly allowance goes on refreshing rates
     // that were already current.
-    if (wallos_rates_refreshed_today($db, $userId)) {
+    if (diamon_rates_refreshed_today($db, $userId)) {
         echo "Rates are already current today.<br />";
         continue;
     }

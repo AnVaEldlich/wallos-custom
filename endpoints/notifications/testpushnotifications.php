@@ -39,11 +39,12 @@ if ($vapidKeys === false) {
     ]));
 }
 
-$adminSettings = wallos_get_admin_settings($db);
+$adminSettings = diamon_get_admin_settings($db);
+// Same fallback as sendnotifications.php: push services reject reserved domains.
 $subject = !empty($adminSettings['from_email']) ? 'mailto:' . $adminSettings['from_email'] : 'mailto:wallos@wallosapp.com';
 
 $payload = json_encode([
-    'title' => translate('wallos_notification', $i18n),
+    'title' => translate('diamon_notification', $i18n),
     'body' => translate('test_notification', $i18n),
 ]);
 

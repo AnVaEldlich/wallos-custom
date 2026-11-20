@@ -79,7 +79,7 @@ if (!in_array($disable, ['0', '1'], true)) {
     exit;
 }
 
-if (wallos_has_oidc_env_value('OIDC_DISABLE_PASSWORD_LOGIN')) {
+if (diamon_has_oidc_env_value('OIDC_DISABLE_PASSWORD_LOGIN')) {
     echo json_encode([
         'success' => false,
         'title' => 'Managed by environment',

@@ -4,7 +4,7 @@ require_once 'includes/currency_rates.php';
 
 function getPriceConverted($price, $currency, $database, $userId)
 {
-  return wallos_convert_price($price, $currency, $database, $userId);
+  return diamon_convert_price($price, $currency, $database, $userId);
 }
 
 function formatCalendarPrice($price, $currencyId, $currencies)

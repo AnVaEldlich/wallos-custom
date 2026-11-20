@@ -6,22 +6,23 @@
   and a single source of truth.
 */
 
-require_once WALLOS_ROOT . '/includes/provider_catalog.php';
+require_once DIAMON_ROOT . '/includes/provider_catalog.php';
 
-wallos_test('provider catalogue has unique stable ids and required fields', function () {
+diamon_test('provider catalogue has unique stable ids and required fields', function () {
     $catalog = get_provider_catalog();
     assert_true(count($catalog) >= 10, 'expected a useful starter catalogue');
 
     $ids = [];
     foreach ($catalog as $provider) {
         assert_true(is_array($provider), 'each entry must be an array');
-        foreach (['id', 'name', 'key', 'search_terms', 'icon', 'account_linking', 'status_check', 'api_cancellation', 'integration_type'] as $field) {
+        foreach (['id', 'name', 'key', 'search_terms', 'icon', 'logo_slug', 'account_linking', 'status_check', 'api_cancellation', 'integration_type'] as $field) {
             assert_true(array_key_exists($field, $provider), "missing field {$field}");
         }
 
         assert_true($provider['id'] !== '', 'id must be non-empty');
         assert_true($provider['name'] !== '', 'name must be non-empty');
         assert_true($provider['key'] !== '', 'key must be non-empty');
+        assert_true($provider['logo_slug'] !== '', 'logo_slug must be non-empty');
         assert_true(is_array($provider['search_terms']), 'search_terms must be an array');
         assert_true(is_array($provider['icon']), 'icon must be an array');
         assert_true(in_array($provider['icon']['type'], ['fa-brands', 'initials'], true), 'icon type must be known');
@@ -43,7 +44,7 @@ wallos_test('provider catalogue has unique stable ids and required fields', func
     }
 });
 
-wallos_test('provider catalogue lookup finds known entries and rejects unknowns', function () {
+diamon_test('provider catalogue lookup finds known entries and rejects unknowns', function () {
     $spotify = get_provider_catalog_entry('spotify');
     assert_true($spotify !== null, 'spotify should exist');
     assert_same('Spotify', $spotify['name'], 'spotify display name');
@@ -53,9 +54,14 @@ wallos_test('provider catalogue lookup finds known entries and rejects unknowns'
     assert_true(in_array('hbo max', $max['search_terms'], true), 'max should remain findable as hbo max');
 
     assert_same(null, get_provider_catalog_entry('does-not-exist'), 'unknown ids return null');
+
+    $claudeCode = get_provider_catalog_entry('claude-code');
+    assert_true($claudeCode !== null, 'claude code should be its own catalogue entry');
+    assert_same('Claude Code', $claudeCode['name'], 'claude code display name');
+    assert_same('https://code.claude.com', $claudeCode['url'], 'claude code product url');
 });
 
-wallos_test('provider catalogue search terms cover expected starter brands', function () {
+diamon_test('provider catalogue search terms cover expected starter brands', function () {
     $names = array_map(function ($provider) {
         return $provider['name'];
     }, get_provider_catalog());
@@ -65,11 +71,25 @@ wallos_test('provider catalogue search terms cover expected starter brands', fun
     }
 });
 
-wallos_test('subscriptions page mounts the catalogue from the single PHP source', function () {
-    $source = file_get_contents(WALLOS_ROOT . '/subscriptions.php');
+diamon_test('provider catalogue logo URLs use the selfh.st jsDelivr path', function () {
+    assert_same(
+        'https://cdn.jsdelivr.net/gh/selfhst/icons/png/netflix.png',
+        provider_catalog_logo_url_for_id('netflix'),
+        'netflix logo url'
+    );
+    assert_same(null, provider_catalog_logo_url_for_id('does-not-exist'), 'unknown provider has no logo url');
+    assert_same(null, provider_catalog_logo_remote_url('../evil'), 'unsafe slug is rejected');
+});
+
+diamon_test('subscriptions page mounts the catalogue from the single PHP source', function () {
+    $source = file_get_contents(DIAMON_ROOT . '/subscriptions.php');
     assert_true(strpos($source, "require_once 'includes/provider_catalog.php'") !== false, 'page loads the catalogue');
     assert_true(strpos($source, 'id="provider-catalog"') !== false, 'catalogue markup is present');
     assert_true(strpos($source, 'enterManualSubscriptionForm') !== false, 'manual entry remains available');
-    assert_true(strpos($source, 'window.providerCatalog') !== false, 'catalogue JSON is exposed once from PHP');
-    assert_true(!file_exists(WALLOS_ROOT . '/scripts/provider-catalog.js'), 'catalogue is not duplicated in a separate JS data file');
+    $popupSource = file_get_contents(DIAMON_ROOT . '/includes/subscription_details_popup.php');
+    assert_true(strpos($popupSource, 'window.providerCatalog') !== false, 'catalogue JSON is exposed for details modal');
+    assert_true(!file_exists(DIAMON_ROOT . '/scripts/provider-catalog.js'), 'catalogue is not duplicated in a separate JS data file');
+
+    $styles = file_get_contents(DIAMON_ROOT . '/styles/styles.css');
+    assert_true(strpos($styles, '.provider-catalog-card.hide') !== false, 'filtered catalogue cards must be hidden');
 });

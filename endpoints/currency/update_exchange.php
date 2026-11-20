@@ -13,7 +13,7 @@ if (isset($_POST['force']) && $_POST['force'] === "true") {
     // rather than out of a value fetched from it, which on PHP 8 is a
     // TypeError and a fatal, and it went unnoticed because the interface only
     // ever posts force=true, so nothing has reached it.
-    $shouldUpdate = !wallos_rates_refreshed_today($db, $userId);
+    $shouldUpdate = !diamon_rates_refreshed_today($db, $userId);
 
     if (!$shouldUpdate) {
         echo "Rates are current, no need to update.";

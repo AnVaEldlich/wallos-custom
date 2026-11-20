@@ -240,7 +240,7 @@ function localize_default_names($db, $userId, $language, array $from = ['en'])
  *
  * Seeding in the account's language covers accounts that are created after it
  * existed; an account that switches its language later kept the names it was
- * seeded with, so a household that moved Wallos to German went on reading
+ * seeded with, so a household that moved Diamon to German went on reading
  * "Entertainment" and "Credit Card" in a German interface.
  *
  * The guard is here rather than at the call site so it can be tested: a save

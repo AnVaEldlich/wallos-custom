@@ -1,6 +1,6 @@
 <?php
-wallos_test('CSV export tolerates subscriptions without payer, payment method or a known category', function () {
-    $source = file_get_contents(WALLOS_ROOT . '/endpoints/subscriptions/export.php');
+diamon_test('CSV export tolerates subscriptions without payer, payment method or a known category', function () {
+    $source = file_get_contents(DIAMON_ROOT . '/endpoints/subscriptions/export.php');
     $start = strpos($source, '$subscriptionDetails = array(');
     $end = strpos($source, ');', $start) + 2;
     assert_true($start !== false && $end > $start, 'details fragment found');
@@ -11,7 +11,7 @@ wallos_test('CSV export tolerates subscriptions without payer, payment method or
     $members = [4 => ['name' => 'Me']];
     $currencies = [5 => ['symbol' => '£']];
     $cyclePrint = 'Monthly';
-    require_once WALLOS_ROOT . '/includes/subscription_payers.php';
+    require_once DIAMON_ROOT . '/includes/subscription_payers.php';
 
     $rows = [
         ['name' => 'Full', 'next_payment' => '2026-11-01', 'auto_renew' => 1, 'category_id' => 2, 'payment_method_id' => 3,
