@@ -29,3 +29,9 @@ GEMINI.md
 .codex/
 .antigravitycli
 plan.html
+
+# Runtime data lives in Docker volumes; never bake it into the image
+/db/*
+!/db/wallos.empty.db
+/logos/
+/.tmp/

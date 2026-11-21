@@ -2,17 +2,17 @@
 
 // Adds Web Push as a notification channel: standard browser push (Push API +
 // Service Worker), no third-party account needed by the user - unlike every
-// other push-style channel Diamon already has (Pushover, Gotify, ntfy),
+// other push-style channel Wallos already has (Pushover, Gotify, ntfy),
 // which all require registering somewhere else first.
 //
 // push_notifications follows the same shape every other channel's settings
 // table has: one row per user, an "enabled" toggle. push_subscriptions is
-// one-to-many instead, because a single account can have Diamon open on a
+// one-to-many instead, because a single account can have Wallos open on a
 // phone and a laptop at once, and each browser/device gets its own
 // subscription (endpoint + keys) from the Push API - there is no single
 // "the subscription" for an account the way there is a single ntfy topic.
 //
-// The instance-wide VAPID keypair identifies this Diamon installation to the
+// The instance-wide VAPID keypair identifies this Wallos installation to the
 // push services (Chrome's, Firefox's, ...) it talks to; it is not configured
 // by an admin the way SMTP is, so it is generated once, lazily, by
 // includes/webpush_helper.php the first time it is needed, and stored on the

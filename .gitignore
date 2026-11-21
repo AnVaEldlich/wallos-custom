@@ -24,3 +24,6 @@ GEMINI.md
 .github/copilot-instructions.md
 .antigravitycli
 plan.html
+
+# Uploaded logos now live in the diamon_logos Docker volume
+/logos/

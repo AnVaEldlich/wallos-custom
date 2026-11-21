@@ -1,0 +1,12 @@
+# Development override: serves the code from this checkout live, so a
+# `git switch` is reflected immediately without rebuilding the image.
+#
+#   docker compose -f docker-compose.yaml -f docker-compose.dev.yml up -d
+#
+# Rebuild (add --build) only when Dockerfile, nginx*.conf or cronjobs change.
+services:
+  diamon:
+    volumes:
+      - '.:/var/www/html'
+      - 'diamon_db:/var/www/html/db'
+      - 'diamon_logos:/var/www/html/images/uploads/logos'

@@ -10,6 +10,9 @@ $migrationTableExists = $db
     ->fetchArray(SQLITE3_ASSOC) !== false;
 
 if ($migrationTableExists) {
+    require_once __DIR__ . '/diamon_migration_renames.php';
+    diamon_rename_legacy_migrations($db);
+
     $migrationQuery = $db->query('SELECT migration FROM migrations');
     while ($row = $migrationQuery->fetchArray(SQLITE3_ASSOC)) {
         $completedMigrations[] = str_replace('../../', '', $row['migration']);
