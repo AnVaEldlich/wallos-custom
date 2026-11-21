@@ -20,7 +20,7 @@ if (!is_dir($uploadDir)) {
  * @param string $name
  * @return string|null saved filename or null on failure
  */
-function migration_000063_fetch_logo($url, $uploadDir, $name)
+function migration_diamon_0002_fetch_logo($url, $uploadDir, $name)
 {
     if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $url)) {
         return null;
@@ -89,7 +89,7 @@ while ($row = $query->fetchArray(SQLITE3_ASSOC)) {
         continue;
     }
 
-    $fileName = migration_000063_fetch_logo($logoUrl, $uploadDir, $row['name'] ?? $catalogId);
+    $fileName = migration_diamon_0002_fetch_logo($logoUrl, $uploadDir, $row['name'] ?? $catalogId);
     if ($fileName === null) {
         // Still persist the catalogue id so the UI can render from CDN.
         if (empty($row['provider_catalog_id'])) {

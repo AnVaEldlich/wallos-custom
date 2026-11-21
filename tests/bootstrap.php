@@ -121,7 +121,8 @@ function diamon_test_database()
             }
             copy(DIAMON_ROOT . '/endpoints/cronjobs/createdatabase.php', $sandbox . '/endpoints/cronjobs/createdatabase.php');
             copy(DIAMON_ROOT . '/includes/run_migrations.php', $sandbox . '/includes/run_migrations.php');
-            // Migrations 000062, 000063 and 000069 load these files from the sandbox.
+            copy(DIAMON_ROOT . '/includes/diamon_migration_renames.php', $sandbox . '/includes/diamon_migration_renames.php');
+            // Migrations diamon_0001, diamon_0002 and diamon_0008 load these files from the sandbox.
             // PHP treats that path as a different file from the application
             // copy, so the sandbox file loads the real one only when the
             // functions are not already declared.

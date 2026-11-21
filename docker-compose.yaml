@@ -30,8 +30,16 @@ services:
       # OIDC_REQUIRE_EMAIL_VERIFIED: "true"
       # Optional SSRF allowlist (overrides the Security Settings allowlist in the Admin UI)
       # SSRF_ALLOWLIST: "auth.example.com,192.168.1.100:8123"
-    # Volumes store your data between container upgrades
+    # Data lives in named Docker volumes, outside the git working tree, so
+    # switching branches never touches the database or uploaded logos.
+    # Back up with: docker run --rm -v diamon_db:/d -v ${PWD}:/b alpine tar czf /b/db.tgz -C /d .
     volumes:
-      - './db:/var/www/html/db'
-      - './logos:/var/www/html/images/uploads/logos'
+      - 'diamon_db:/var/www/html/db'
+      - 'diamon_logos:/var/www/html/images/uploads/logos'
     restart: unless-stopped
+
+volumes:
+  diamon_db:
+    name: diamon_db
+  diamon_logos:
+    name: diamon_logos
